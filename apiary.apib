@@ -1,0 +1,183 @@
+HOST: http://www.sci-dentity.org/sinq/
+
+--- ScienceKit ---
+
+---
+Welcome to the our ScienceKit API documentation. All comments can be written in (support [Markdown](http://daringfireball.net/projects/markdown/syntax) syntax)
+---
+
+--
+User
+The following is a section of resources related to users
+--
+
+POST /api/accounts/create
+> Content-Type: application/json
+{
+    "username": "myusername",
+    "password": "secretpassword"
+}
+< 200
+{
+    "status": "created",
+    "url": "/accounts/1"
+}
+
+POST /api/accounts/login
+> Content-Type: application/json
+{
+    "username": "myusername",
+    "password": "secretpassword"
+}
+< 200
+{
+    "status": "logged in"
+}
+
+POST /api/accounts/logout
+> Content-Type: application/json
+{
+    "username": "myusername"
+}
+< 200
+{
+    "status": "logged out"
+}
+
+POST /api/accounts/delete
+> Content-Type: application/json
+{
+    "username": "myusername",
+    "password": "secretpassword"
+}
+< 200
+{
+    "status": "deleted"
+}
+
+--
+Question
+The following is a section of resources related to questions
+--
+
+Get a list of existing questions
+GET /api/questions
+< 200
+< Content-Type: application/json
+[
+    {
+        pk: 1,
+        model: "sinq3.question",
+        fields: {
+            text: "Why are rubber bands stretchy?"
+        }
+    }, 
+    {
+        pk: 3,
+        model: "sinq3.question",
+        fields: {
+            text: "Why are carrots orange?"
+        }
+    }, 
+]
+
+Create a new question
+POST /api/questions/create
+> Content-Type: application/json
+{
+    cause: "I pulled it apart.",
+    effect: "Rubber bands stretch."
+}
+< 200
+{
+    "status": "created",
+    "url": "/causeandeffects/1"
+}
+
+Get a list of the images associated with the specified question
+GET /api/questions/1/images
+< 200
+[
+    {
+        pk: 1,
+        model: "sinq3.questionimage",
+        fields: {
+            date_created: "2012-11-27T20:19:26.740Z",
+            image: "images/questions/cdv_photo_018.jpg",
+            question: 1,
+            date_last_modified: "2012-11-27T20:19:26.740Z"
+        }
+    }
+]
+
+Create a new image for the specified question
+POST /api/questions/1/images/create
+> Content-Type: multipart/form-data
+{
+    "data": "base64_image_data"
+}
+< 200
+{
+    "status": "created",
+    "url": "/questions/1/images/2"
+}
+
+--
+Cause and Effect
+The following is a section of resources related to causes and effects
+--
+
+List a cause and effect
+GET /api/causeandeffects
+< 200
+< Content-Type: application/json
+{
+    pk: 1,
+    model: "sinq3.causeandeffect",
+    fields: {
+        text: "Why are rubber bands stretchy?"
+    }
+}
+
+--
+Investigation
+The following is a section of resources related to step by step
+--
+
+List existing step by step investigations
+GET /api/investigations
+< 200
+< Content-Type: application/json
+{
+    pk: 1,
+    model: "sinq3.investigation",
+    fields: {
+        text: "Why are rubber bands stretchy?"
+    }
+}
+
+-- DEMO: Shopping Cart --
+
+List products added into your shopping-cart. (comment block again in Markdown)
+GET /shopping-cart
+< 200
+< Content-Type: application/json
+{ "items": [
+{ "url": "/shopping-cart/1", "product":"2ZY48XPZ", "quantity": 1, "name": "New socks", "price": 1.25 }
+] }
+
+Save new products in your shopping cart
+POST /shopping-cart
+> Content-Type: application/json
+{ "product":"1AB23ORM", "quantity": 2 }
+< 201
+< Content-Type: application/json
+{ "status": "created", "url": "/shopping-cart/2" }
+
+-- DEMO: Shopping Cart --
+
+This resource allows you to submit payment information to process your *shopping cart* items
+POST /payment
+{ "cc": "12345678900", "cvc": "123", "expiry": "0112" }
+< 200
+{ "receipt": "/payment/receipt/1" }

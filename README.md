@@ -3,7 +3,7 @@ ScienceKit
 
 ScienceKit is a research project from the University of Maryland, College Park.
 
-== Getting and Setting Up ScienceKit ==
+## Getting and Setting Up ScienceKit
 
 Check out from GitHub:
 

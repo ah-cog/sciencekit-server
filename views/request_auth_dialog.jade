@@ -1,0 +1,101 @@
+script(src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js")
+
+script
+	window.onload = function() {
+		var a_link = document.getElementById("auth_link");
+		a_link.onclick = function() {
+			exchangeGrantForAccessToken({ 
+				'client_id': '#{ referrer_uri_params['client_id'] }',
+				'client_secret': '#{ referrer_uri_params['client_secret'] }',
+				'code': '#{ authorization_code }',
+				'grant_type': 'authorization_code',
+				'redirect_uri': '/'
+			});
+
+			return false;
+		}
+
+		$('#account-list').click(function() {
+			
+			var access_token = $('#token_response').text();
+
+			apiGetUser({
+					'access_token': access_token
+				});
+
+			return false;
+		});
+	}
+
+	function exchangeGrantForAccessToken(options) {
+		console.log('Exchanging authorization grant for access token.');
+		// console.log(data);
+		$.ajax({
+			type: 'POST',
+			beforeSend: function(request) {
+				request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+			},
+			url: '/oauth/token',
+			data: 'client_id=' + options['client_id'] + '&client_secret=' + options['client_secret'] + '&code=' + options['code'] + '&grant_type=authorization_code&redirect_uri=/oauth/exchange',
+			dataType: 'text',
+			processData: false,
+			success: function(data) {
+				console.log('Received access token (success).');
+				var token = jQuery.parseJSON(data);
+				$('#token_response').text(token.access_token);
+			},
+			error: function() {
+				console.log('Failed to retreive access token.');
+			}
+		});
+	}
+
+	function apiGetUser(options) {
+		console.log('Requesting protected resource user.');
+		$.ajax({
+			type: 'GET',
+			beforeSend: function(request) {
+				request.setRequestHeader('Authorization', 'Bearer ' + options['access_token']);
+			},
+			url: '/api/account/list',
+			dataType: 'text',
+			success: function(data) {
+				console.log('Received protected resource (success).');
+				var user = jQuery.parseJSON(data);
+				$('#resource_response').text(data);
+			},
+			error: function() {
+				console.log('Failed to retreive protected resource.');
+			}
+		});
+	}
+
+h1 Ready to make first contact?  The ScienceKit robots can help you connect your ScienceKit Node to the ScienceKit World Brain.
+
+h2 Hook into the global brain!  (Make first contact.  Is anybody out there?  <smoke signal, technology, letter, etc.>)
+
+a(href="/dialog/authorize?client_id=abc123&client_secret=ssh-secret&response_type=code&redirect_uri=/oauth/exchange") Authorize
+
+p Received authorization grant (identified by authorization code) 'code': #{ authorization_code }
+
+hr
+
+h2 Mingle.
+
+a(id="auth_link", href="javascript:void(0);") Authenticate ScienceKit
+
+p(id="token_response") no token received
+
+hr
+
+a(id="account-list", href="javascript:void(0);") Request resource (using access token)
+
+p(id="resource_response") no resource received
+
+a(href="/") << Home
+
+// bob:secret@localhost:3000/oauth/token
+//
+// Content-Type: application/x-www-form-urlencoded
+//
+// client_id=abc123&client_secret=ssh-secret&code=aLfc8IerbeeLEGTP&grant_type=authorization_code&redirect_uri=/

@@ -1,0 +1,30 @@
+{
+  "name": "ScienceKit",
+  "description": "ScienceKit Web Application",
+  "version": "0.0.1",
+  "private": true,
+  "engines": {
+      "npm":  "1.1.x",
+      "node": "0.10.0"
+  },
+  "scripts": {
+    "start": "node app"
+  },
+  "dependencies": {
+    "express": "3.1.0",
+    "ejs": "*",
+    "jade": "*",
+    "nib": "*",
+    "require": "*",
+    "socket.io": "*",
+    "stylus": "*",
+    "oauth2orize": "*",
+    "connect-ensure-login": "*",
+    "passport-local": "0.1.x",
+    "passport-http": "0.2.x",
+    "passport-oauth2-client-password": "0.1.x",
+    "passport-http": "0.2.x",
+    "url": "*",
+    "mongoose": "*"
+  }
+}

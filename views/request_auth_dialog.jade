@@ -1,6 +1,60 @@
 script(src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js")
 
+script(src="/socket.io/socket.io.js")
+
 script
+	// OAuth2 Script
+
+	// Socket connection for data streaming
+	var socketio;
+
+	$(function() {
+		socketio = io.connect();
+
+		// Error
+		socketio.socket.on('error', function(reason) {
+			console.error('Unable to connect socket.io', reason);
+		});
+
+		// Listen for 'connect' event listener and define event handler.
+		socketio.on('connect', function () {
+			$('#incomingChatMessages').append($('<li>Connected</li>'));
+
+			socketio.on('message', function(message) {
+				$('#incomingChatMessages').append($('<li></li>').text(message));
+
+				// TODO: Update this to use custom message
+				// var stroke = JSON.parse(message);
+				// var s = new createjs.Shape();
+				// s.graphics.clear().setStrokeStyle(stroke['size'], 'round', 'round').beginStroke(stroke['color']).moveTo(stroke['from'].x, stroke['from'].y).curveTo(stroke['midpoint'].x, stroke['midpoint'].y, stroke['to'].x, stroke['to'].y);
+				// stage.addChild(s);
+			});
+
+			socketio.on('disconnect', function() {
+				$('#incomingChatMessages').append('<li>Disconnected</li>');
+			});
+		});
+
+		// Define interaction event listeners
+
+		// Set up event listener
+		$('#outgoingChatMessage').keypress(function(event) {
+			if(event.which == 13) {
+				event.preventDefault();
+
+				var message = $('#outgoingChatMessage').val();
+
+				console.log('Sending message: ' + message);
+				socketio.send(message);
+				$('#incomingChatMessages').append($('<li></li>').text($('#outgoingChatMessage').val()));
+				$('#outgoingChatMessage').val('');
+			}
+		});
+	});
+
+script
+	// OAuth2 Script
+
 	window.onload = function() {
 		var a_link = document.getElementById("auth_link");
 		a_link.onclick = function() {
@@ -91,6 +145,15 @@ hr
 a(id="account-list", href="javascript:void(0);") Request resource (using access token)
 
 p(id="resource_response") no resource received
+
+hr
+
+h2 socket.io
+
+input(id="outgoingChatMessage")
+ul(id="incomingChatMessages")
+
+hr
 
 a(href="/") << Home
 

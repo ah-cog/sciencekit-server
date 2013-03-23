@@ -10,7 +10,8 @@ var express  = require('express')
   , util     = require('util')
   , jade     = require('jade')
   , url      = require('url')
-  , mongoose = require('mongoose');
+  , mongoose = require('mongoose')
+  , socketio = require('socket.io');
 
 
 
@@ -56,7 +57,13 @@ db.once('open', function callback () {
 var app = express();
 
 app.configure(function(){
-  app.set('port', process.env.PORT || 3000);
+
+  // Start listening for incoming connections on specified port.
+  // This port setting is needed by Heroku or the app will not run.
+  var port = process.env.PORT || 3000;
+
+  app.set('port', port);
+
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
   app.use(express.favicon());
@@ -172,6 +179,56 @@ app.get('/api/account/list', controllers.account.list);
 
 
 // Start ScienceKit HTTP server
-http.createServer(app).listen(app.get('port'), function(){
+var server = http.createServer(app).listen(app.get('port'), function() {
   console.log("ScienceKit server listening on port " + app.get('port'));
 });
+
+// Starting socket.io
+var io = socketio.listen(server).on('connection', function (socket) {
+
+  // TODO: Store data from these
+  console.log(socket);
+  console.log(socket.handshake);
+
+  // Handler for received "message" messages
+  socket.on('message', function (msg) {
+    console.log('\'message\' event received: ', msg);
+    socket.broadcast.emit('message', msg);
+  });
+
+  // Handler for received "disconnect" messages
+  //
+  // "[T]he disconnect event is fired in all cases, when the client-server 
+  //  connection is closed. It fires on wanted, unwanted, mobile, unmobile, 
+  //  client and server disconnects. There is no dedicated reconnect event. 
+  //  You have to use the "connection" event for reconnect handling."
+  //
+  // [Source: https://github.com/LearnBoost/socket.io/wiki/Exposed-events]
+  socket.on('disconnect', function() {
+    console.log("Socket disconnected.");
+  });
+
+});
+
+// Configure socket.io for Heroku (socket.io will not work without this configuration)
+// [Source: https://github.com/LearnBoost/socket.io/wiki/Configuring-Socket.IO]
+io.configure(function () { 
+
+  // Set transport mechanism.  Heroku requires "xhr-polling".
+  //
+  // For reference, these can be the following:
+  //
+  //    io.set('transports', [
+  //      'websocket'
+  //    , 'flashsocket'
+  //    , 'htmlfile'
+  //    , 'xhr-polling'
+  //    , 'jsonp-polling'
+  //    ]);
+  io.set("transports", ["xhr-polling"]); 
+  io.set("polling duration", 10); 
+
+});
+
+// Render some console log output
+console.log("ScienceKit server listening for socket/streaming connections on port " + app.get('port'));

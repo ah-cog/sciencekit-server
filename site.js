@@ -5,7 +5,7 @@ var passport = require('passport')
   , login = require('connect-ensure-login')
 
 exports.loginForm = function(req, res) {
-  res.render('login', {});
+	res.render('login', {});
 };
 
 exports.login = passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login' });

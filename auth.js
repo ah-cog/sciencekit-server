@@ -59,6 +59,20 @@ passport.deserializeUser(function(id, done) {
 });
 
 
+passport.use('user', new BasicStrategy(
+  function(username, password, done) {
+    // Find account for specified account ID (find account by account ID)
+    Account.findOne({ 'username': username }, function(err, account) {
+      console.log("Found account match for received account ID.");
+      if (err) { return done(err); }
+      if (!account) { return done(null, false); }
+      if (account.password != password) { return done(null, false); }
+      return done(null, account);
+    });
+  }
+));
+
+
 /**
  * BasicStrategy & ClientPasswordStrategy
  *
@@ -70,7 +84,7 @@ passport.deserializeUser(function(id, done) {
  * to the `Authorization` header).  While this approach is not recommended by
  * the specification, in practice it is quite common.
  */
-passport.use(new BasicStrategy(
+passport.use('client', new BasicStrategy(
   function(username, password, done) {
     // Find client for specified client ID (find client by client ID)
     Client.findOne({ 'clientId': username }, function(err, client) {
@@ -131,7 +145,6 @@ passport.use(new BearerStrategy(
       //   var info = { scope: '*' }
       //   done(null, user, info);
       // });
-
 
       Account.findById(token.userID, function(err, account) {
         console.log("Found account for received token.");

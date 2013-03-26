@@ -1,26 +1,23 @@
-!!!
-html
-	head
-		title #{ title }
-		link(rel="stylesheet", href="/stylesheets/style.css")
+extends layout
+
+block content
+	img(src="/images/sciencekit-logo.png", alt="sciencekit logo")
+	p(class="tagline") tell a story
+	- if(user)
+		p Hello #{ user.name }.
+		p
+			a(href="/logout") Logout
+
+		hr
+
+		p
+			b Settings
+
+		p Add client (who should have to create this? developer (me)?  each school deployment (their "developers/admins")?  each user? ) [from device or from desktop, with web access?]
 		
-	body
-		h1 #{ title }
-		p Welcome to #{ title }!
-		- if(user)
-			p Hello #{ user.name }.
-			p
-				a(href="/logout") Logout
+		a(href="/oauth/exchange") Authorize ScienceKit
 
-			hr
-
-			p
-				b Settings
-
-			p Add client (who should have to create this? developer (me)?  each school deployment (their "developers/admins")?  each user? ) [from device or from desktop, with web access?]
-			
-			a(href="/oauth/exchange") Authorize ScienceKit
-
-		- else
-			p Sign Up
-			a(href="/login") Login
+	- else
+		p(class='login-step') 1. signup
+		p(class='login-step') 2. 
+			a(href="/login") login

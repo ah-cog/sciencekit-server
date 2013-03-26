@@ -57,6 +57,7 @@ server.deserializeClient(function(id, done) {
 // values, and will be exchanged for an access token.
 
 server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, done) {
+
   var code = utils.uid(16);
   console.log("Received Authorize grant request from client: " + client);
   console.log("Generated code: " + code);
@@ -68,7 +69,6 @@ server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, do
     console.log("Stored code: " + authorizationCode);
     done(null, code);
   });
-
 
 }));
 
@@ -172,7 +172,7 @@ exports.decision = [
 // authenticate when making requests to this endpoint.
 
 exports.token = [
-  passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
+  passport.authenticate(['client', 'oauth2-client-password'], { session: false }),
   server.token(),
   server.errorHandler()
 ]

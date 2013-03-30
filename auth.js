@@ -4,7 +4,6 @@
 var passport = require('passport')
   , LocalStrategy = require('passport-local').Strategy
   , BasicStrategy = require('passport-http').BasicStrategy
-  , TwitterStrategy = require('passport-twitter').Strategy
   , ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy
   , BearerStrategy = require('passport-http-bearer').Strategy
   , mongoose = require('mongoose')

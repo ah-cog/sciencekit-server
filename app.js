@@ -215,6 +215,23 @@ app.post('/dialog/authorize/decision', oauth2.decision);
 app.get('/oauth/exchange', oauth2.exchangeGrantForToken); // (1) extract authorization_code (grant) and (2) make request to exchange grant for access token to /oauth/token; (3) store resulting access_token and token_type in DB
 app.post('/oauth/token', oauth2.token); // (C)
 
+app.post('/api/client/create', function(req, res, next) {
+  // Create client
+  var client = new Client({
+    name: 'ScienceKit Node',
+    clientId: 'abc123',
+    clientSecret: 'ssh-secret'
+  });
+
+  // // Save thought to datastore
+  client.save(function(err, client) {
+    if (err) {
+      console.log('Error creating client: ' + client);
+    }
+    console.log('Created client: ' + client);
+    res.json(client);
+  });
+});
 
 // [Source: http://stackoverflow.com/questions/7067966/how-to-allow-cors-in-express-nodejs]
 // [Source: https://developer.mozilla.org/en-US/docs/HTTP/Access_control_CORS?redirectlocale=en-US&redirectslug=HTTP_access_control#Preflighted_requests]

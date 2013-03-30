@@ -1,10 +1,14 @@
+var mongoose = require('mongoose')
+	, AccountSchema = require('./account');
+
 var questionSchema = new mongoose.Schema({
-  text: String,
-  date: { type: Date, default: Date.now },
-  hidden: Boolean
-  //author: ,
+	text: { type: String, required: true },
+	date: { type: Date, default: Date.now },
+	hidden: Boolean,
+	author: AccountSchema
 }, 
 {
   autoIndex: false
 });
+
 module.exports = mongoose.model('Question', questionSchema); // Compile schema to a model

@@ -6,25 +6,29 @@ var express  = require('express')
   , path     = require('path')
   , passport = require('passport')
   , oauth2   = require('./oauth2')
-  , site     = require('./site')
   , util     = require('util')
   , jade     = require('jade')
   , url      = require('url')
   , mongoose = require('mongoose')
   , socketio = require('socket.io')
   , stylus   = require('stylus')
-  , nib      = require('nib');
+  , nib      = require('nib')
+  , moment   = require('moment');
 
 
 var AccessToken = require('./models/accesstoken')
   , Account = require('./models/account')
-  , Client = require('./models/client');
+  , Client = require('./models/client')
+  , Thought = require('./models/thought')
+  , Photo = require('./models/photo');
 
 
 
 
 // Connect to Mongoose
-var mongooseUri = 'mongodb://localhost/sciencekit';
+var mongooseUri = process.env.MONGOLAB_URI 
+                  || process.env.MONGOHQ_URL 
+                  || 'mongodb://localhost/sciencekit';
 
 // mongoose.connect(uri, options);
 //    db      - passed to the connection db instance
@@ -59,34 +63,6 @@ db.on('disconnected', function callback() {
 
 
 
-
-// NOTE: Uncomment the following code to initialize the database with required "dummy data".  This will not be required in the future.
-// // Initialize users in database
-// var bob = new Account({ 'username': 'bob', 'password': 'secret', 'name': 'Bob Smith' });
-// var joe = new Account({ 'username': 'joe', 'password': 'password', 'name': 'Joe Davis' });
-// bob.save(function(err, bob) {
-//   if(err) {
-//     console.log('Could not save bob.');
-//   }
-// });
-// joe.save(function(err, joe) {
-//   if(err) {
-//     console.log('Could not save joe.');
-//   }
-// });
-
-// // Initialize clients in database
-// var Client = require('./models/client.js');
-// var demoClient = new Client({ 'name': 'ScienceKit Probe', 'clientId': 'abc123', 'clientSecret': 'ssh-secret' });
-// demoClient.save(function(err, client) {
-//   if(err) {
-//     console.log('Could not save client.');
-//   }
-// });
-
-
-
-
 // Stylus compile function
 function compile(str, path) {
   return stylus(str)
@@ -111,7 +87,11 @@ app.configure(function() {
   app.set('view engine', 'jade');
   app.use(express.favicon());
   app.use(express.logger('dev'));
-  app.use(express.bodyParser());
+  app.use(express.bodyParser({
+    uploadDir: __dirname + '/public/photos',
+    keepExtensions: true
+  }));
+  // app.use(express.limit('5mb'));
   app.use(express.methodOverride());
   app.use(express.cookieParser('your secret here'));
   app.use(express.session()); // Make sure this is before passport.initialize()
@@ -161,22 +141,27 @@ app.get('/', routes.index);
 //   res.send('yay');
 // });
 
-app.get('/api/clients',
-  passport.authenticate('user', { session: false }),
-  function(req, res) {
-    console.log('Received API request: ' + req);
-    Client.findOne({ 'clientId': 'abc123' }, function(err, client) {
-      if (err) { return done(err); }
+// This is for developers only... so not needed here?
+// app.get('/api/clients',
+//   passport.authenticate('user', { session: false }),
+//   function(req, res) {
+//     console.log('Received API request: ' + req);
+//     Client.findOne({ 'clientId': 'abc123' }, function(err, client) {
+//       if (err) { return done(err); }
 
-      res.json(client);
-    });
-  }
-);
+//       res.json(client);
+//     });
+//   }
+// );
 
-app.get('/login', site.loginForm);
-app.post('/login', site.login);
-app.get('/logout', site.logout);
-app.get('/account', site.account);
+app.get('/signup', routes.signupForm);
+app.post('/signup', controllers.account.create);
+app.get('/login', routes.loginForm);
+app.post('/login', routes.login);
+app.get('/logout', routes.logout);
+app.get('/account', routes.account);
+
+app.get('/timeline', routes.timeline);
 
 //app.get('/oauth/client'); // Register an app for a user.  Create the client ID and client secret for an application.
 
@@ -227,22 +212,13 @@ app.get('/dialog/authorize', oauth2.authorization); // (A)
 app.post('/dialog/authorize/decision', oauth2.decision);
 
 // Authorization Server
-app.get('/oauth/exchange', function(req, res) { // Generates request to (C)
-  var code = req.query["code"]
-  console.log(code);
-
-  // Store code in DB for client
-  var referrer_uri = req.header('Referer');
-  console.log(referrer_uri);
-  var referrer_uri_params = url.parse(referrer_uri, true).query;
-  console.log(referrer_uri_params);
-
-  res.render('request_auth_dialog', { authorization_code: code, referrer_uri_params: referrer_uri_params });
-  //res.redirect('/oauth/token');
-}); // (1) extract authorization_code (grant) and (2) make request to exchange grant for access token to /oauth/token; (3) store resulting access_token and token_type in DB
+app.get('/oauth/exchange', oauth2.exchangeGrantForToken); // (1) extract authorization_code (grant) and (2) make request to exchange grant for access token to /oauth/token; (3) store resulting access_token and token_type in DB
 app.post('/oauth/token', oauth2.token); // (C)
 
 
+// [Source: http://stackoverflow.com/questions/7067966/how-to-allow-cors-in-express-nodejs]
+// [Source: https://developer.mozilla.org/en-US/docs/HTTP/Access_control_CORS?redirectlocale=en-US&redirectslug=HTTP_access_control#Preflighted_requests]
+// [Source: http://www.html5rocks.com/en/tutorials/cors/]
 app.all('/api/*', function(req, res, next) {
   console.log('Received API request: ' + req);
   res.header("Access-Control-Allow-Origin", "*");
@@ -250,11 +226,23 @@ app.all('/api/*', function(req, res, next) {
   res.header("Access-Control-Allow-Headers", "X-Requested-With, Authorization"); // TODO: Remove "Authorization" to this to make more secure!
   res.header("Access-Control-Max-Age", "3628800");
   next();
- });
+});
 
 // Resource Server (this is an OAuth2 term)
 // The resource server stores the protected resources (API URIs that require authentication).
 app.get('/api/account/list', controllers.account.list);
+
+app.get('/api/thought', controllers.thought.list);
+//app.post('/api/thought', controllers.thought.create);
+
+app.get('/api/photo/:id', controllers.photo.read);
+app.get('/api/photo', controllers.photo.list);
+//app.post('/api/photo', controllers.photo.create);
+
+// app.get('/api/types', controllers.timeline.list); // Returns a list of the element types that can be used for TimelineElement.elementType
+app.get('/api/timeline', controllers.timeline.list);
+app.get('/api/timeline/create', controllers.timeline.create);
+app.post('/api/timeline-element/create', controllers.timeline_element.create);
 
 
 
@@ -265,13 +253,19 @@ var server = http.createServer(app).listen(app.get('port'), function() {
 });
 
 // Starting socket.io
-var io = socketio.listen(server).on('connection', function (socket) {
+var io = socketio.listen(server);
 
-  // TODO: Store data from these
-  // console.log(socket);
-  // console.log(socket.handshake);
+var connections = [];
 
-  // TODO: By default, check cookie session (if in browser).  Otherwise, continue to check OAuth
+// Sockets server configuration
+io.on('connection', function (socket) {
+
+  // Save socket for client
+  if(socket.handshake.address in connections) {
+    connections.push(socket);
+  } else {
+    connections[socket.handshake.address] = [ socket ];
+  }
 
   // Start custom authentication handshaking (request OAuth access token from client)
   socket.emit('oauthrequesttoken');
@@ -325,12 +319,10 @@ var io = socketio.listen(server).on('connection', function (socket) {
 
 
         // Strip OAuth2 access token
-        message = account.username + ': ' + message.message;
+        message = { account: account, message: message };
 
         // TODO: Create session ID?  So don't have to use access token, can just use session?
-
         // TODO: Store contribution in database (if appropriate)
-
 
         // TODO: Only emit to authenticated sockets with token stored in DB
         socket.broadcast.emit('message', message);
@@ -350,6 +342,12 @@ var io = socketio.listen(server).on('connection', function (socket) {
   // [Source: https://github.com/LearnBoost/socket.io/wiki/Exposed-events]
   socket.on('disconnect', function() {
     console.log("Socket disconnected.");
+
+    // Remove socket for client
+    var connectionIndex = connections[socket.handshake.address].indexOf(socket);
+    if(connectionIndex !== -1) {
+      connections[socket.handshake.address].splice(connectionIndex, 1);
+    }
 
     // TODO: remote OAuth auth. for socket.id
   });
@@ -392,6 +390,70 @@ io.configure(function () {
   });
 
 });
+
+app.post('/api/thought', [
+  passport.authenticate('bearer', { session: false }),
+  function(req, res) {
+
+    console.log("BODY: " + req.body.thought.id);
+    console.log("BODY: " + req.body.thought.text);
+
+    Account.findById(req.user.id, function(err, account) {
+      // res.json({ user_id: req.user.id, name: req.user.name, scope: req.authInfo.scope })
+
+      // // Create thought
+      var thought = new Thought({
+        text: req.body.thought.text,
+        author: account
+      });
+
+      // // Save thought to datastore
+      thought.save(function(err, thought) {
+        if (err) {
+          console.log('Error creating thought: ' + thought);
+        }
+        console.log('Created thought: ' + thought);
+
+        io.sockets.emit('thought', thought);
+        res.json(thought);
+      });
+    });
+  }
+])
+
+app.post('/api/photo', [
+  passport.authenticate('bearer', { session: false }),
+  function(req, res, next) {
+
+    console.log(req.files);
+
+    Account.findById(req.user.id, function(err, account) {
+      // res.json({ user_id: req.user.id, name: req.user.name, scope: req.authInfo.scope })
+
+      var filenameStart = req.files.myphoto.path.indexOf("/photos");
+      var photoUri = req.files.myphoto.path.substring(filenameStart);
+      console.log("photoUri = " + photoUri);
+
+      // // Create photo
+      var photo = new Photo({
+        uri: photoUri,
+        author: account
+      });
+
+      // // Save thought to datastore
+      photo.save(function(err, photo) {
+        if (err) {
+          console.log('Error creating photo: ' + photo);
+        }
+        console.log('Created photo: ' + photo);
+
+        io.sockets.emit('photo', photo);
+        res.json(photo);
+      });
+    });
+
+  }
+]);
 
 // Render some console log output
 console.log("ScienceKit server listening for socket/streaming connections on port " + app.get('port'));

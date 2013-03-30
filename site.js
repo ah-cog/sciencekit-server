@@ -4,6 +4,10 @@
 var passport = require('passport')
   , login = require('connect-ensure-login')
 
+exports.signupForm = function(req, res) {
+	res.render('signup', {});
+};
+
 exports.loginForm = function(req, res) {
 	res.render('login', {});
 };

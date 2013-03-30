@@ -8,7 +8,8 @@ var oauth2orize = require('oauth2orize')
   , jade     = require('jade')
   , Client = require('./models/client')
   , AccessToken = require('./models/accesstoken')
-  , AuthorizationCode = require('./models/authorizationcode');
+  , AuthorizationCode = require('./models/authorizationcode')
+  , url      = require('url');
 
 // create OAuth 2.0 server
 var server = oauth2orize.createServer();
@@ -96,13 +97,24 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
       console.log('Stored access token: ' + accessToken);
       done(null, token);
     });
-
-    // db.accessTokens.save(token, authCode.userID, authCode.clientID, function(err) {
-    //   if (err) { return done(err); }
-    //   done(null, token);
-    // });
   });
 }));
+
+
+
+exports.exchangeGrantForToken = function(req, res) { // Generates request to (C)
+  var code = req.query["code"]
+  console.log(code);
+
+  // Store code in DB for client
+  var referrer_uri = req.header('Referer');
+  console.log(referrer_uri);
+  var referrer_uri_params = url.parse(referrer_uri, true).query;
+  console.log(referrer_uri_params);
+
+  res.render('request_auth_dialog', { authorization_code: code, referrer_uri_params: referrer_uri_params });
+  //res.redirect('/oauth/token');
+}
 
 
 
@@ -137,14 +149,6 @@ exports.authorization = [
       return done(null, client, redirectURI);
     });
 
-    // db.clients.findByClientId(clientId, function(err, client) {
-    //   if (err) { return done(err); }
-    //   // WARNING: For security purposes, it is highly advisable to check that
-    //   //          redirectURI provided by the client matches one registered with
-    //   //          the server.  For simplicity, this example does not.  You have
-    //   //          been warned.
-    //   return done(null, client, redirectURI);
-    // });
   }),
   function(req, res){
     res.render('dialog', { transactionID: req.oauth2.transactionID, user: req.user, myclient: req.oauth2.client });

@@ -11,7 +11,8 @@ var passport = require('passport')
   , Account = require('./models/account')
   , Client = require('./models/client')
   , AccessToken = require('./models/accesstoken')
-  , AuthorizationCode = require('./models/authorizationcode');
+  , AuthorizationCode = require('./models/authorizationcode')
+  , bcrypt = require('bcrypt');
 
 /**
  * LocalStrategy
@@ -29,18 +30,16 @@ passport.use(new LocalStrategy(
       if (!account) {
         return done(null, false, { 'message': 'Incorrect username.' });
       }
-      if (account.password != password) {
-        return done(null, false, { 'message': 'Incorrect password.' });
-      }
+
+      // Check if hashed password matches
+      bcrypt.compare(password, account.password, function(err, res) {
+        if (res == false) {
+          return done(null, false, { 'message': 'Incorrect password.' });
+        }
+      });
+
       return done(null, account);
     });
-
-    // db.users.findByUsername(username, function(err, user) {
-    //   if (err) { return done(err); }
-    //   if (!user) { return done(null, false); }
-    //   if (user.password != password) { return done(null, false); }
-    //   return done(null, user);
-    // });
   }
 ));
 
@@ -52,10 +51,6 @@ passport.deserializeUser(function(id, done) {
   Account.findById(id, function(err, account) {
     done(err, account);
   });
-
-  // db.users.find(id, function (err, user) {
-  //   done(err, user);
-  // });
 });
 
 
@@ -66,7 +61,13 @@ passport.use('user', new BasicStrategy(
       console.log("Found account match for received account ID.");
       if (err) { return done(err); }
       if (!account) { return done(null, false); }
-      if (account.password != password) { return done(null, false); }
+
+      bcrypt.compare(password, account.password, function(err, res) {
+        if (res == false) {
+          return done(null, false);
+        }
+      });
+
       return done(null, account);
     });
   }
@@ -94,13 +95,6 @@ passport.use('client', new BasicStrategy(
       if (client.clientSecret != password) { return done(null, false); }
       return done(null, client);
     });
-
-    // db.clients.findByClientId(username, function(err, client) {
-    //   if (err) { return done(err); }
-    //   if (!client) { return done(null, false); }
-    //   if (client.clientSecret != password) { return done(null, false); }
-    //   return done(null, client);
-    // });
   }
 ));
 
@@ -112,13 +106,6 @@ passport.use(new ClientPasswordStrategy(
       if (client.clientSecret != clientSecret) { return done(null, false); }
       return done(null, client);
     });
-
-    // db.clients.findByClientId(clientId, function(err, client) {
-    //   if (err) { return done(err); }
-    //   if (!client) { return done(null, false); }
-    //   if (client.clientSecret != clientSecret) { return done(null, false); }
-    //   return done(null, client);
-    // });
   }
 ));
 
@@ -136,15 +123,6 @@ passport.use(new BearerStrategy(
     AccessToken.findOne({ 'token': accessToken }, function(err, token) {
       if (err) { return done(err); }
       if (!token) { return done(null, false); }
-      
-      // db.users.find(token.userID, function(err, user) {
-      //   if (err) { return done(err); }
-      //   if (!user) { return done(null, false); }
-      //   // to keep this example simple, restricted scopes are not implemented,
-      //   // and this is just for illustrative purposes
-      //   var info = { scope: '*' }
-      //   done(null, user, info);
-      // });
 
       Account.findById(token.userID, function(err, account) {
         console.log("Found account for received token.");

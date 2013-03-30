@@ -25,6 +25,8 @@
     "passport-oauth2-client-password": "0.1.x",
     "passport-http": "0.2.x",
     "url": "*",
-    "mongoose": "*"
+    "mongoose": "*",
+    "moment": "*",
+    "bcrypt": "*"
   }
 }

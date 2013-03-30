@@ -1,1 +1,3 @@
-exports.account = require('./account');
+exports.Account = require('./account');
+
+exports.Thought = require('./thought');

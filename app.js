@@ -20,7 +20,10 @@ var AccessToken = require('./models/accesstoken')
   , Account = require('./models/account')
   , Client = require('./models/client')
   , Thought = require('./models/thought')
-  , Photo = require('./models/photo');
+  , ThoughtElement = require('./models/thought-element') // a crumb is an atom, it's part of a story
+  , TimelineElement = require('./models/timeline-element')
+  , Photo = require('./models/photo')
+  , PhotoElement = require('./models/photo-element');
 
 
 
@@ -215,6 +218,7 @@ app.post('/dialog/authorize/decision', oauth2.decision);
 app.get('/oauth/exchange', oauth2.exchangeGrantForToken); // (1) extract authorization_code (grant) and (2) make request to exchange grant for access token to /oauth/token; (3) store resulting access_token and token_type in DB
 app.post('/oauth/token', oauth2.token); // (C)
 
+// TODO: Update this so it creates real IDs and real secrets :-)
 app.post('/api/client/create', function(req, res, next) {
   // Create client
   var client = new Client({
@@ -236,13 +240,20 @@ app.post('/api/client/create', function(req, res, next) {
 // [Source: http://stackoverflow.com/questions/7067966/how-to-allow-cors-in-express-nodejs]
 // [Source: https://developer.mozilla.org/en-US/docs/HTTP/Access_control_CORS?redirectlocale=en-US&redirectslug=HTTP_access_control#Preflighted_requests]
 // [Source: http://www.html5rocks.com/en/tutorials/cors/]
+// [Source: http://stackoverflow.com/questions/11001817/allow-cors-rest-request-to-a-express-node-js-application-on-heroku]
 app.all('/api/*', function(req, res, next) {
   console.log('Received API request: ' + req);
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  res.header("Access-Control-Allow-Headers", "X-Requested-With, Authorization"); // TODO: Remove "Authorization" to this to make more secure!
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "X-Requested-With, Authorization, Content-Type"); // TODO: Remove "Authorization" to this to make more secure!
   res.header("Access-Control-Max-Age", "3628800");
-  next();
+
+  // Intercept OPTIONS method (for CORS "preflight" request)
+  if(req.method === 'OPTIONS') {
+    res.send(200);
+  } else {
+    next();
+  }
 });
 
 // Resource Server (this is an OAuth2 term)
@@ -408,65 +419,115 @@ io.configure(function () {
 
 });
 
-app.post('/api/thought', [
+// 1. get or create "thought"
+// 2. get or create "timeline element"
+// 3. create thought element
+app.post('/api/thought-element', [
   passport.authenticate('bearer', { session: false }),
   function(req, res) {
+    // TODO: Make sure required parameters are present, correct
 
-    console.log("BODY: " + req.body.thought.id);
-    console.log("BODY: " + req.body.thought.text);
+    var timeline = '5156b399cefe76e37d000001';
+
+    console.log(req.body);
 
     Account.findById(req.user.id, function(err, account) {
-      // res.json({ user_id: req.user.id, name: req.user.name, scope: req.authInfo.scope })
 
-      // // Create thought
-      var thought = new Thought({
-        text: req.body.thought.text,
-        author: account
+      // function sendResponse(req, res, socketEvent, object) {
+      //   // Return result to clients
+      //   io.sockets.emit(socketEvent, object); // TODO: is this the wrong place?  better place?  guaranteed here?
+      //   res.json(object);
+      // }
+
+      var thoughtElementTemplate = req.body;
+      thoughtElementTemplate.account = account;
+
+      // TODO: Verify valid JSON
+      // TODO: Verify required fields for element are present
+
+      // "Recall" thought, i.e., Get existing one with specified ID or create a new one.
+      Thought.getOrCreateThought(thoughtElementTemplate, function(err, thought) {
+
+        // Create thought element
+        ThoughtElement.createThoughtElement(thought, thoughtElementTemplate, function(err, thoughtElement) {
+
+          // Create timeline element
+          // TODO: Only create one "timeline element" per "thought element"
+          
+          TimelineElement.createTimelineElement(timeline, thought, function(err, timelineElement) {
+
+            // Return result to clients
+            io.sockets.emit('thought_element', thoughtElement); // TODO: is this the wrong place?  better place?  guaranteed here?
+            res.json(thoughtElement);
+          });
+        });
       });
 
-      // // Save thought to datastore
-      thought.save(function(err, thought) {
-        if (err) {
-          console.log('Error creating thought: ' + thought);
-        }
-        console.log('Created thought: ' + thought);
 
-        io.sockets.emit('thought', thought);
-        res.json(thought);
-      });
     });
   }
-])
+]);
 
 app.post('/api/photo', [
   passport.authenticate('bearer', { session: false }),
   function(req, res, next) {
+
+    var timeline = '5156b399cefe76e37d000001';
 
     console.log(req.files);
 
     Account.findById(req.user.id, function(err, account) {
       // res.json({ user_id: req.user.id, name: req.user.name, scope: req.authInfo.scope })
 
+      //var photoElementTemplate     = req.body;
+      var photoElementTemplate     = {};
       var filenameStart = req.files.myphoto.path.indexOf("/photos");
-      var photoUri = req.files.myphoto.path.substring(filenameStart);
-      console.log("photoUri = " + photoUri);
+      photoElementTemplate.file = req.files.myphoto;
+      photoElementTemplate.uri = req.files.myphoto.path.substring(filenameStart);
+      photoElementTemplate.account = account;
+      // var filenameStart = req.files.myphoto.path.indexOf("/photos");
+      // var photoUri = req.files.myphoto.path.substring(filenameStart);
+      console.log("photoUri = " + photoElementTemplate.uri);
+
+
+
+
+
+
+      // "Recall" thought, i.e., Get existing one with specified ID or create a new one.
+      Photo.getOrCreatePhoto(photoElementTemplate, function(err, photo) {
+
+        // Create thought element
+        PhotoElement.createPhotoElement(photo, photoElementTemplate, function(err, photoElement) {
+
+          // Create timeline element
+          // TODO: Only create one "timeline element" per "thought element"
+          
+          TimelineElement.createTimelineElement(timeline, photo, function(err, timelineElement) {
+
+            // Return result to clients
+            io.sockets.emit('photo', photoElement);
+            res.json(photo);
+          });
+        });
+      });
 
       // // Create photo
-      var photo = new Photo({
-        uri: photoUri,
-        author: account
-      });
+      // var photo = new Photo({
+      //   uri: photoUri,
+      //   author: account
+      // });
 
-      // // Save thought to datastore
-      photo.save(function(err, photo) {
-        if (err) {
-          console.log('Error creating photo: ' + photo);
-        }
-        console.log('Created photo: ' + photo);
+      // // // Save thought to datastore
+      // photo.save(function(err, photo) {
+      //   if (err) {
+      //     console.log('Error creating photo: ' + photo);
+      //   }
+      //   console.log('Created photo: ' + photo);
 
-        io.sockets.emit('photo', photo);
-        res.json(photo);
-      });
+      //   io.sockets.emit('photo', photo);
+      //   res.json(photo);
+      // });
     });
 
   }

@@ -4,7 +4,7 @@ var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account')
 	, Thought = require('../models/thought')
-	, ThoughtElement = require('../models/thought-element');
+	, ThoughtScope = require('../models/thought-element');
 
 // TODO: Delete the following code when done testing... this shouldn't be public :-)
 exports.list = [
@@ -16,8 +16,8 @@ exports.list = [
 	    // example simply returns the scope in the response.
 		//Thought.findById(req.user.id, function(err, account) {
 		//Thought.find({}, function(err, thoughts) {
-		Thought.find({}).populate('author').exec(function(err, thoughts) {
-			res.json(thoughts);
+		ThoughtElement.find({}).populate('author').exec(function(err, thoughtElements) {
+			res.json(thoughtElements);
 			// res.json({ user_id: req.user.id, name: req.user.name, scope: req.authInfo.scope })
 		});
 	}
@@ -28,7 +28,6 @@ exports.create = [
 	passport.authenticate('bearer', { session: false }),
 	function(req, res) {
 
-		// TODO: Move from app.js to here... figure out how to wire in socket.io from here.
-
+		// TODO: Move from app.js to this file.
 	}
 ]

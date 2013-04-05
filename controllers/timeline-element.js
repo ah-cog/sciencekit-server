@@ -1,7 +1,6 @@
 // Controller
 // Exports methods for Account model.
 var passport = require('passport')
-	, socketio = require('socket.io')
 	, Account = require('../models/account.js')
 	, Timeline = require('../models/timeline')
 	, TimelineElement = require('../models/timeline-element.js');

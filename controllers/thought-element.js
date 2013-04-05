@@ -4,7 +4,8 @@ var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account')
 	, Thought = require('../models/thought')
-	, ThoughtScope = require('../models/thought-element');
+	, ThoughtElement = require('../models/thought-element')
+  , Story = require('../models/story');
 
 // TODO: Delete the following code when done testing... this shouldn't be public :-)
 exports.list = [
@@ -25,9 +26,35 @@ exports.list = [
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
 exports.create = [
-	passport.authenticate('bearer', { session: false }),
-	function(req, res) {
+  passport.authenticate('bearer', { session: false }),
+  function(req, res) {
+    // TODO: Make sure required parameters are present, correct
 
-		// TODO: Move from app.js to this file.
-	}
+    console.log(req.body);
+
+    Account.findById(req.user.id, function(err, account) {
+
+      // function sendResponse(req, res, socketEvent, object) {
+      //   // Return result to clients
+      //   io.sockets.emit(socketEvent, object); // TODO: is this the wrong place?  better place?  guaranteed here?
+      //   res.json(object);
+      // }
+
+      var thoughtElementTemplate = req.body;
+      thoughtElementTemplate.account = account;
+      console.log("got: ");
+      console.log(thoughtElementTemplate);
+      console.log("timeline = %s", thoughtElementTemplate.timeline);
+
+      // TODO: Verify valid JSON
+      // TODO: Verify required fields for element are present
+
+      Story.addThought(thoughtElementTemplate, function(err, timelineElement) {
+        res.json(timelineElement);
+        io.sockets.emit('thought', timelineElement); // TODO: is this the wrong place?  better place?  guaranteed here?
+      });
+
+
+    });
+  }
 ]

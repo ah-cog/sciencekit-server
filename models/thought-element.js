@@ -21,23 +21,26 @@ thoughtElementSchema.statics.createThoughtElement = function(thought, thoughtEle
 
 		text: thoughtElementTemplate.text,
 		author: thoughtElementTemplate.account
-		}, function(err, thoughtElement) {
-			// Save thought to datastore
-			console.log('Creating thought element.');
-			if (err) {
-				console.log('Error creating thought element: ' + thoughtElement);
-			}
-			console.log('Created thought element: ' + thoughtElement);
 
-			// Update latest thought
-			// TODO: create function 'thought.setLatest' and 'thought.setFirst' or just '.set' and '.get'
-			var updateOptions = {};
-			updateOptions.latest = thoughtElement;
-			if(thought.first == null) { // If the thought is new
-				updateOptions.first = thoughtElement;
-			}
+	}, function(err, thoughtElement) {
 
-			Thought.update({ _id: thought._id, }, updateOptions, function(err, numberAffected) {
+		// Save thought to datastore
+		console.log('Creating thought element.');
+		if (err) {
+			console.log('Error creating thought element: ' + thoughtElement);
+		}
+		console.log('Created thought element: ' + thoughtElement);
+
+		// Update latest thought
+		// TODO: create function 'thought.setLatest' and 'thought.setFirst' or just '.set' and '.get'
+		thought.latest = thoughtElement;
+		if(thought.first == null) { // If the thought is new
+			thought.first = thoughtElement;
+		}
+		thought.save(function(err) {
+
+			console.log("Saved updated thought");
+			console.log(thought);
 
 			fn(null, thoughtElement);
 

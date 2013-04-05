@@ -2,10 +2,11 @@
 // Exports methods for Account model.
 var passport = require('passport')
 	, bcrypt = require('bcrypt')
-	, Account = require('../models/account.js');
+	, Account = require('../models/account')
+	, Story = require('../models/story');
 
 // TODO: Delete the following code when done testing... this shouldn't be public :-)
-exports.list = [
+exports.read = [
 	passport.authenticate('bearer', { session: false }),
 	function(req, res) {
 		// req.authInfo is set using the `info` argument supplied by
@@ -13,8 +14,8 @@ exports.list = [
 	    // and used in access control checks.  For illustrative purposes, this
 	    // example simply returns the scope in the response.
 		Account.findById(req.user.id, function(err, account) {
-			res.send(account);
-			// res.json({ user_id: req.user.id, name: req.user.name, scope: req.authInfo.scope })
+			delete account.password;
+			res.json(account);
 		});
 	}
 ]
@@ -22,22 +23,19 @@ exports.list = [
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
 exports.create = function(req, res) {
 
-	var username = req.body.username;
-	var password = req.body.password;
-	console.log(username);
-	console.log(password);
+	var accountTemplate = req.body;
 
-	if (username !== '' && password !== '') {
+	if (accountTemplate.username !== '' && accountTemplate.password !== '') {
 
 		// Hash the password using bcrypt
 		var workFactor = 10;
 		bcrypt.genSalt(workFactor, function(err, salt) {
-		    bcrypt.hash(password, salt, function(err, hash) {
+		    bcrypt.hash(accountTemplate.password, salt, function(err, hash) {
 		        // Store hash in your password DB.
 
 		        // Create account
 				var account = new Account({
-					username: username,
+					username: accountTemplate.username,
 					password: hash,
 					name: ''
 				});
@@ -49,10 +47,16 @@ exports.create = function(req, res) {
 						res.redirect('/signup');
 					}
 
-					console.log('Created account: ' + account);
-					res.redirect('/timeline');
-				});
+					// Create timeline for account
+					Story.createTimelineByElement(account, function(err, timeline) {
+						if (err) {
+							console.log('Error creating timeline for new account:' + account);
+						}
 
+						console.log('Created account: ' + account);
+						res.redirect('/timeline');
+					});
+				});
 		    });
 		});
 	}

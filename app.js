@@ -258,19 +258,17 @@ app.all('/api/*', function(req, res, next) {
 
 // Resource Server (this is an OAuth2 term)
 // The resource server stores the protected resources (API URIs that require authentication).
-app.get('/api/account/list', controllers.account.list);
+app.get('/api/account', controllers.account.read);
+
+app.get ('/api/timeline',        controllers.timeline.read);
+app.post('/api/timeline/create', controllers.timeline.create);
 
 app.get('/api/thought', controllers.thought.list);
-//app.post('/api/thought', controllers.thought.create);
+app.post('/api/thought', controllers.thought_element.create);
 
-app.get('/api/photo/:id', controllers.photo.read);
 app.get('/api/photo', controllers.photo.list);
-//app.post('/api/photo', controllers.photo.create);
-
-// app.get('/api/types', controllers.timeline.list); // Returns a list of the element types that can be used for TimelineElement.elementType
-app.get('/api/timeline', controllers.timeline.list);
-app.get('/api/timeline/create', controllers.timeline.create);
-app.post('/api/timeline-element/create', controllers.timeline_element.create);
+app.post('/api/photo', controllers.photo_element.create);
+app.get('/api/photo/:id', controllers.photo.read);
 
 
 
@@ -281,19 +279,21 @@ var server = http.createServer(app).listen(app.get('port'), function() {
 });
 
 // Starting socket.io
-var io = socketio.listen(server);
+io = socketio.listen(server);
 
 var connections = [];
 
-// Sockets server configuration
+// Sockets server configuration.
+// Do not preceed 'io' with 'var'.  This allows 'io' to be globally accessible,
+// accessible in other modules.
 io.on('connection', function (socket) {
 
   // Save socket for client
-  if(socket.handshake.address in connections) {
-    connections.push(socket);
-  } else {
-    connections[socket.handshake.address] = [ socket ];
-  }
+  // if(socket.handshake.address in connections) {
+  //   connections.push(socket);
+  // } else {
+  //   connections[socket.handshake.address] = [ socket ];
+  // }
 
   // Start custom authentication handshaking (request OAuth access token from client)
   socket.emit('oauthrequesttoken');
@@ -372,10 +372,10 @@ io.on('connection', function (socket) {
     console.log("Socket disconnected.");
 
     // Remove socket for client
-    var connectionIndex = connections[socket.handshake.address].indexOf(socket);
-    if(connectionIndex !== -1) {
-      connections[socket.handshake.address].splice(connectionIndex, 1);
-    }
+    // var connectionIndex = connections[socket.handshake.address].indexOf(socket);
+    // if(connectionIndex !== -1) {
+    //   connections[socket.handshake.address].splice(connectionIndex, 1);
+    // }
 
     // TODO: remote OAuth auth. for socket.id
   });
@@ -418,120 +418,6 @@ io.configure(function () {
   });
 
 });
-
-// 1. get or create "thought"
-// 2. get or create "timeline element"
-// 3. create thought element
-app.post('/api/thought-element', [
-  passport.authenticate('bearer', { session: false }),
-  function(req, res) {
-    // TODO: Make sure required parameters are present, correct
-
-    var timeline = '5156b399cefe76e37d000001';
-
-    console.log(req.body);
-
-    Account.findById(req.user.id, function(err, account) {
-
-      // function sendResponse(req, res, socketEvent, object) {
-      //   // Return result to clients
-      //   io.sockets.emit(socketEvent, object); // TODO: is this the wrong place?  better place?  guaranteed here?
-      //   res.json(object);
-      // }
-
-      var thoughtElementTemplate = req.body;
-      thoughtElementTemplate.account = account;
-
-      // TODO: Verify valid JSON
-      // TODO: Verify required fields for element are present
-
-      // "Recall" thought, i.e., Get existing one with specified ID or create a new one.
-      Thought.getOrCreateThought(thoughtElementTemplate, function(err, thought) {
-
-        // Create thought element
-        ThoughtElement.createThoughtElement(thought, thoughtElementTemplate, function(err, thoughtElement) {
-
-          // Create timeline element
-          // TODO: Only create one "timeline element" per "thought element"
-          
-          TimelineElement.createTimelineElement(timeline, thought, function(err, timelineElement) {
-
-            // Return result to clients
-            io.sockets.emit('thought_element', thoughtElement); // TODO: is this the wrong place?  better place?  guaranteed here?
-            res.json(thoughtElement);
-          });
-        });
-      });
-
-
-    });
-  }
-]);
-
-app.post('/api/photo', [
-  passport.authenticate('bearer', { session: false }),
-  function(req, res, next) {
-
-    var timeline = '5156b399cefe76e37d000001';
-
-    console.log(req.files);
-
-    Account.findById(req.user.id, function(err, account) {
-      // res.json({ user_id: req.user.id, name: req.user.name, scope: req.authInfo.scope })
-
-      //var photoElementTemplate     = req.body;
-      var photoElementTemplate     = {};
-      var filenameStart = req.files.myphoto.path.indexOf("/photos");
-      photoElementTemplate.file = req.files.myphoto;
-      photoElementTemplate.uri = req.files.myphoto.path.substring(filenameStart);
-      photoElementTemplate.account = account;
-      // var filenameStart = req.files.myphoto.path.indexOf("/photos");
-      // var photoUri = req.files.myphoto.path.substring(filenameStart);
-      console.log("photoUri = " + photoElementTemplate.uri);
-
-
-
-
-
-
-      // "Recall" thought, i.e., Get existing one with specified ID or create a new one.
-      Photo.getOrCreatePhoto(photoElementTemplate, function(err, photo) {
-
-        // Create thought element
-        PhotoElement.createPhotoElement(photo, photoElementTemplate, function(err, photoElement) {
-
-          // Create timeline element
-          // TODO: Only create one "timeline element" per "thought element"
-          
-          TimelineElement.createTimelineElement(timeline, photo, function(err, timelineElement) {
-
-            // Return result to clients
-            io.sockets.emit('photo', photoElement);
-            res.json(photo);
-          });
-        });
-      });
-
-      // // Create photo
-      // var photo = new Photo({
-      //   uri: photoUri,
-      //   author: account
-      // });
-
-      // // // Save thought to datastore
-      // photo.save(function(err, photo) {
-      //   if (err) {
-      //     console.log('Error creating photo: ' + photo);
-      //   }
-      //   console.log('Created photo: ' + photo);
-
-      //   io.sockets.emit('photo', photo);
-      //   res.json(photo);
-      // });
-    });
-
-  }
-]);
 
 // Render some console log output
 console.log("ScienceKit server listening for socket/streaming connections on port " + app.get('port'));

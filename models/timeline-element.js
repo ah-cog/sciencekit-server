@@ -2,7 +2,7 @@ var mongoose = require('mongoose')
 	, Timeline = require('./timeline');
 
 var timelineElementSchema = new mongoose.Schema({
-	timeline: { type: mongoose.Schema.ObjectId, ref: 'Timeline', required: true },
+	timeline: { type: mongoose.Schema.ObjectId, ref: 'Timeline', required: true }, // Timeline upon which this event occurred (not the one created for this event)
 
 	element: { type: mongoose.Schema.Types.ObjectId, required: true }, // i.e., the referenced object itself
 	elementType: { type: String, required: true }, // i.e., the "ref" value, e.g., 'Thought'
@@ -16,7 +16,7 @@ timelineElementSchema.statics.getOrCreate = function(element, fn) {
   // Store reference to TimelineElement object
   var myThis = this;
 
-  this.findOne({ element: element }, function(err, existingTimelineElement) {
+  this.findOne({ element: element, timeline: element.timeline }, function(err, existingTimelineElement) {
     if(err) throw err;
 
     // Check if a element exists with the specified ID.  If not, create a new element.
@@ -27,6 +27,8 @@ timelineElementSchema.statics.getOrCreate = function(element, fn) {
       fn(null, existingTimelineElement);
 
     } else {
+
+      // Timeline element doesn't exist.  Create new timeline element.
 
       var elementType = element.constructor.modelName;
 

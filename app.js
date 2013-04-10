@@ -29,9 +29,7 @@ var AccessToken = require('./models/accesstoken')
 
 
 // Connect to Mongoose
-var mongooseUri = process.env.MONGOLAB_URI 
-                  || process.env.MONGOHQ_URL 
-                  || 'mongodb://localhost/sciencekit';
+var mongooseUri = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/sciencekit';
 
 // mongoose.connect(uri, options);
 //    db      - passed to the connection db instance
@@ -47,20 +45,20 @@ mongoose.connect(mongooseUri, mongooseOptions);
 // [Source: http://mongoosejs.com/docs/api.html#connection-js]
 var db = mongoose.connection;
 db.on('error', function callback() {
-  // console.error.bind(console, 'Mongoose connection error: ')
-  console.log('Mongoose connection error.');
+    // console.error.bind(console, 'Mongoose connection error: ')
+    console.log('Mongoose connection error.');
 });
 db.once('open', function callback() {
-  console.log('Mongoose connection opened successfully.'); // Yay
+    console.log('Mongoose connection opened successfully.'); // Yay
 });
 
 // Emitted when this connection successfully connects to the db. May be emitted multiple times in reconnected scenarios.
 db.on('connected', function callback() {
-  console.log('Mongoose: connected');
+    console.log('Mongoose: connected');
 });
 // Emitted after getting disconnected from the db.
 db.on('disconnected', function callback() {
-  console.log('Mongoose: disconnected');
+    console.log('Mongoose: disconnected');
 });
 
 
@@ -68,9 +66,9 @@ db.on('disconnected', function callback() {
 
 // Stylus compile function
 function compile(str, path) {
-  return stylus(str)
-      .set('filename', path)
-      .use(nib());
+    return stylus(str)
+        .set('filename', path)
+        .use(nib());
 }
 
 
@@ -80,41 +78,41 @@ var app = express();
 
 app.configure(function() {
 
-  // Start listening for incoming connections on specified port.
-  // This port setting is needed by Heroku or the app will not run.
-  var port = process.env.PORT || 3000;
+    // Start listening for incoming connections on specified port.
+    // This port setting is needed by Heroku or the app will not run.
+    var port = process.env.PORT || 3000;
 
-  app.set('port', port);
+    app.set('port', port);
 
-  app.set('views', __dirname + '/views');
-  app.set('view engine', 'jade');
-  app.use(express.favicon());
-  app.use(express.logger('dev'));
-  app.use(express.bodyParser({
-    uploadDir: __dirname + '/public/photos',
-    keepExtensions: true
-  }));
-  // app.use(express.limit('5mb'));
-  app.use(express.methodOverride());
-  app.use(express.cookieParser('your secret here'));
-  app.use(express.session()); // Make sure this is before passport.initialize()
+    app.set('views', __dirname + '/views');
+    app.set('view engine', 'jade');
+    app.use(express.favicon());
+    app.use(express.logger('dev'));
+    app.use(express.bodyParser({
+        uploadDir: __dirname + '/public/photos',
+        keepExtensions: true
+    }));
+    // app.use(express.limit('5mb'));
+    app.use(express.methodOverride());
+    app.use(express.cookieParser('your secret here'));
+    app.use(express.session()); // Make sure this is before passport.initialize()
 
-  // Passport
-  app.use(passport.initialize());
-  app.use(passport.session());
+    // Passport
+    app.use(passport.initialize());
+    app.use(passport.session());
 
-  app.use(app.router);
+    app.use(app.router);
 
-  app.use(stylus.middleware({  
-    src: __dirname + '/public',
-    compile: compile
-  }));
+    app.use(stylus.middleware({
+        src: __dirname + '/public',
+        compile: compile
+    }));
 
-  app.use(express.static(path.join(__dirname, 'public')));
+    app.use(express.static(path.join(__dirname, 'public')));
 });
 
-app.configure('development', function(){
-  app.use(express.errorHandler());
+app.configure('development', function() {
+    app.use(express.errorHandler());
 });
 
 
@@ -220,21 +218,21 @@ app.post('/oauth/token', oauth2.token); // (C)
 
 // TODO: Update this so it creates real IDs and real secrets :-)
 app.post('/api/client/create', function(req, res, next) {
-  // Create client
-  var client = new Client({
-    name: 'ScienceKit Node',
-    clientId: 'abc123',
-    clientSecret: 'ssh-secret'
-  });
+    // Create client
+    var client = new Client({
+        name: 'ScienceKit Node',
+        clientId: 'abc123',
+        clientSecret: 'ssh-secret'
+    });
 
-  // // Save thought to datastore
-  client.save(function(err, client) {
-    if (err) {
-      console.log('Error creating client: ' + client);
-    }
-    console.log('Created client: ' + client);
-    res.json(client);
-  });
+    // Save thought to datastore
+    client.save(function(err, client) {
+        if (err) {
+            console.log('Error creating client: ' + client);
+        }
+        console.log('Created client: ' + client);
+        res.json(client);
+    });
 });
 
 // [Source: http://stackoverflow.com/questions/7067966/how-to-allow-cors-in-express-nodejs]
@@ -242,18 +240,18 @@ app.post('/api/client/create', function(req, res, next) {
 // [Source: http://www.html5rocks.com/en/tutorials/cors/]
 // [Source: http://stackoverflow.com/questions/11001817/allow-cors-rest-request-to-a-express-node-js-application-on-heroku]
 app.all('/api/*', function(req, res, next) {
-  console.log('Received API request: ' + req);
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "X-Requested-With, Authorization, Content-Type"); // TODO: Remove "Authorization" to this to make more secure!
-  res.header("Access-Control-Max-Age", "3628800");
+    console.log('Received API request: ' + req);
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "X-Requested-With, Authorization, Content-Type"); // TODO: Remove "Authorization" to this to make more secure!
+    res.header("Access-Control-Max-Age", "3628800");
 
-  // Intercept OPTIONS method (for CORS "preflight" request)
-  if(req.method === 'OPTIONS') {
-    res.send(200);
-  } else {
-    next();
-  }
+    // Intercept OPTIONS method (for CORS "preflight" request)
+    if(req.method === 'OPTIONS') {
+        res.send(200);
+    } else {
+        next();
+    }
 });
 
 // Resource Server (this is an OAuth2 term)
@@ -275,7 +273,7 @@ app.get('/api/photo/:id', controllers.photo.read);
 
 // Start ScienceKit HTTP server
 var server = http.createServer(app).listen(app.get('port'), function() {
-  console.log("ScienceKit server listening on port " + app.get('port'));
+    console.log("ScienceKit server listening on port " + app.get('port'));
 });
 
 // Starting socket.io
@@ -288,22 +286,22 @@ var connections = [];
 // accessible in other modules.
 io.on('connection', function (socket) {
 
-  // Save socket for client
-  // if(socket.handshake.address in connections) {
-  //   connections.push(socket);
-  // } else {
-  //   connections[socket.handshake.address] = [ socket ];
-  // }
+    // Save socket for client
+    // if(socket.handshake.address in connections) {
+    //   connections.push(socket);
+    // } else {
+    //   connections[socket.handshake.address] = [ socket ];
+    // }
 
-  // Start custom authentication handshaking (request OAuth access token from client)
-  socket.emit('oauthrequesttoken');
+    // Start custom authentication handshaking (request OAuth access token from client)
+    socket.emit('oauthrequesttoken');
 
-  // Handler for received "oauth" messages.
-  // Authenticates the socket connection.
-  socket.on('oauthtoken', function (msg) {
-    console.log('\'oauthtoken\' event received: ', msg);
+    // Handler for received "oauth" messages.
+    // Authenticates the socket connection.
+    socket.on('oauthtoken', function (msg) {
+        console.log('\'oauthtoken\' event received: ', msg);
 
-    var accessToken = msg || '';
+        var accessToken = msg || '';
 
     // Authenticate socket
     // TODO: If token is valid, authenticate the socket, store token in database.
@@ -311,25 +309,25 @@ io.on('connection', function (socket) {
 
     // Check if access token is valid.
     AccessToken.findOne({ 'token': accessToken }, function(err, token) {
-      if (err) { socket.disconnect(); return; }
-      if (!token) { socket.disconnect(); return; }
-      console.log("Found access token: " + token);
-
-      Account.findById(token.userID, function(err, account) {
         if (err) { socket.disconnect(); return; }
-        if (!account) { socket.disconnect(); return; }
-        console.log("Found account for received token: " + account);
+        if (!token) { socket.disconnect(); return; }
+        console.log("Found access token: " + token);
 
-        // TODO: Only emit to authenticated sockets
-        socket.emit('oauthtokensuccess');
-      });
+        Account.findById(token.userID, function(err, account) {
+            if (err) { socket.disconnect(); return; }
+            if (!account) { socket.disconnect(); return; }
+            console.log("Found account for received token: " + account);
+
+            // TODO: Only emit to authenticated sockets
+            socket.emit('oauthtokensuccess');
+        });
     });
 
-  });
+    });
 
-  // Handler for received "message" messages
-  socket.on('message', function (msg) {
-    console.log('\'message\' event received: ', msg);
+    // Handler for received "message" messages
+    socket.on('message', function (msg) {
+        console.log('\'message\' event received: ', msg);
 
     // Get access token (if any)... required.
     var message = JSON.parse(msg);
@@ -337,48 +335,48 @@ io.on('connection', function (socket) {
 
     // Check if access token is valid.
     AccessToken.findOne({ 'token': accessToken }, function(err, token) {
-      if (err) { socket.disconnect(); return; }
-      if (!token) { socket.disconnect(); return; }
-
-      Account.findById(token.userID, function(err, account) {
         if (err) { socket.disconnect(); return; }
-        if (!account) { socket.disconnect(); return; }
+        if (!token) { socket.disconnect(); return; }
+
+        Account.findById(token.userID, function(err, account) {
+            if (err) { socket.disconnect(); return; }
+            if (!account) { socket.disconnect(); return; }
 
 
 
-        // Strip OAuth2 access token
-        message = { account: account, message: message };
+            // Strip OAuth2 access token
+            message = { account: account, message: message };
 
-        // TODO: Create session ID?  So don't have to use access token, can just use session?
-        // TODO: Store contribution in database (if appropriate)
+            // TODO: Create session ID?  So don't have to use access token, can just use session?
+            // TODO: Store contribution in database (if appropriate)
 
-        // TODO: Only emit to authenticated sockets with token stored in DB
-        socket.broadcast.emit('message', message);
-      });
+            // TODO: Only emit to authenticated sockets with token stored in DB
+            socket.broadcast.emit('message', message);
+        });
     });
 
     // socket.broadcast.emit('message', msg);
-  });
+    });
 
-  // Handler for received "disconnect" messages
-  //
-  // "[T]he disconnect event is fired in all cases, when the client-server 
-  //  connection is closed. It fires on wanted, unwanted, mobile, unmobile, 
-  //  client and server disconnects. There is no dedicated reconnect event. 
-  //  You have to use the "connection" event for reconnect handling."
-  //
-  // [Source: https://github.com/LearnBoost/socket.io/wiki/Exposed-events]
-  socket.on('disconnect', function() {
-    console.log("Socket disconnected.");
+    // Handler for received "disconnect" messages
+    //
+    // "[T]he disconnect event is fired in all cases, when the client-server 
+    //  connection is closed. It fires on wanted, unwanted, mobile, unmobile, 
+    //  client and server disconnects. There is no dedicated reconnect event. 
+    //  You have to use the "connection" event for reconnect handling."
+    //
+    // [Source: https://github.com/LearnBoost/socket.io/wiki/Exposed-events]
+    socket.on('disconnect', function() {
+        console.log("Socket disconnected.");
 
-    // Remove socket for client
-    // var connectionIndex = connections[socket.handshake.address].indexOf(socket);
-    // if(connectionIndex !== -1) {
-    //   connections[socket.handshake.address].splice(connectionIndex, 1);
-    // }
+        // Remove socket for client
+        // var connectionIndex = connections[socket.handshake.address].indexOf(socket);
+        // if(connectionIndex !== -1) {
+        //   connections[socket.handshake.address].splice(connectionIndex, 1);
+        // }
 
-    // TODO: remote OAuth auth. for socket.id
-  });
+        // TODO: remote OAuth auth. for socket.id
+    });
 
 });
 
@@ -386,36 +384,36 @@ io.on('connection', function (socket) {
 // [Source: https://github.com/LearnBoost/socket.io/wiki/Configuring-Socket.IO]
 io.configure(function () { 
 
-  // Set transport mechanism.  Heroku requires "xhr-polling".
-  //
-  // For reference, these can be the following:
-  //
-  //    io.set('transports', [
-  //      'websocket'
-  //    , 'flashsocket'
-  //    , 'htmlfile'
-  //    , 'xhr-polling'
-  //    , 'jsonp-polling'
-  //    ]);
-  io.set("transports", ["xhr-polling"]); 
-  io.set("polling duration", 10); 
+    // Set transport mechanism.  Heroku requires "xhr-polling".
+    //
+    // For reference, these can be the following:
+    //
+    //    io.set('transports', [
+    //      'websocket'
+    //    , 'flashsocket'
+    //    , 'htmlfile'
+    //    , 'xhr-polling'
+    //    , 'jsonp-polling'
+    //    ]);
+    io.set("transports", ["xhr-polling"]); 
+    io.set("polling duration", 10); 
 
-  // Enable and set up socket.io streaming authorization
-  // [Source: https://github.com/LearnBoost/socket.io/wiki/Authorizing]
-  io.set('authorization', function (handshakeData, callback) {
+    // Enable and set up socket.io streaming authorization
+    // [Source: https://github.com/LearnBoost/socket.io/wiki/Authorizing]
+    io.set('authorization', function (handshakeData, callback) {
 
-    // 1. Establish connection
-    // 2. Store data needed for later OAuth2 authentication using access token
+        // 1. Establish connection
+        // 2. Store data needed for later OAuth2 authentication using access token
 
 
-    // Do database lookup to see if the OAuth2 client that initiated the socket.io handshaking has a valid access token    
+        // Do database lookup to see if the OAuth2 client that initiated the socket.io handshaking has a valid access token    
 
-    // Set arguments to callback function
-    // "Sending an error or setting the authorized argument to false both result in not allowing the client to connect to the server."
-    var error = null;
-    var authorized = true; // "authorized" is a Boolean value indicating whether the client is authorized.
-    callback(error, authorized); // error first callback style 
-  });
+        // Set arguments to callback function
+        // "Sending an error or setting the authorized argument to false both result in not allowing the client to connect to the server."
+        var error = null;
+        var authorized = true; // "authorized" is a Boolean value indicating whether the client is authorized.
+        callback(error, authorized); // error first callback style 
+    });
 
 });
 

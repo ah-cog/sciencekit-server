@@ -11,48 +11,6 @@ var timelineElementSchema = new mongoose.Schema({
 	hidden: Boolean
 });
 
-timelineElementSchema.statics.getOrCreate = function(element, fn) {
-
-  // Store reference to TimelineElement object
-  var myThis = this;
-
-  this.findOne({ element: element, timeline: element.timeline }, function(err, existingTimelineElement) {
-    if(err) throw err;
-
-    // Check if a element exists with the specified ID.  If not, create a new element.
-    if(existingTimelineElement !== null && existingTimelineElement.length > 0) {
-      console.log("Found existing timeline element: " + existingTimelineElement);
-
-      // Create timeline element
-      fn(null, existingTimelineElement);
-
-    } else {
-
-      // Timeline element doesn't exist.  Create new timeline element.
-
-      var elementType = element.constructor.modelName;
-
-      // Save a new timeline element to datastore
-      var timelineElement = new myThis({
-        timeline: element.timeline,
-        elementType: elementType,
-        element: element
-      });
-      console.log('Saving timeline element: ' + timelineElement);
-      timelineElement.save(function(err) {
-        // if(err) throw err;
-        if (err) {
-          console.log('Error creating timeline element: ' + timelineElement);
-        }
-        console.log('Created timeline element: ' + timelineElement);
-
-        // Create timeline element
-        fn(null, timelineElement);
-      });
-    }
-  });
-}
-
 timelineElementSchema.statics.createTimelineElement = function(timeline, element, fn) {
 
   var elementType = element.constructor.modelName;

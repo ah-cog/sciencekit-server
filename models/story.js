@@ -11,29 +11,38 @@ var storySchema = new mongoose.Schema({
 	hidden: Boolean
 });
 
+// Add Thought to Story.
+// This consists of creating the Thought and setting up associated models  
+// and relationships.
 storySchema.statics.addThought = function(thoughtTemplate, fn) {
+
+	// Make sure all required properties are present
+	if (!thoughtTemplate.hasOwnProperty('text') || !thoughtTemplate.hasOwnProperty('timeline')) {
+		console.log('Cannot add thought.  Required properties are missing.');
+		fn('Cannot add thought.  Required properties are missing.');
+	}
 
 	var Story = this;
 
 	// Create thought collection.  "Recall" thought, i.e., Get existing one with specified ID or create a new one.
-	Story.getOrCreateThought(thoughtTemplate, function(err, thought) {
+	Story.getThoughtPotential(thoughtTemplate, function(err, thoughtPotential) {
 
         // Create Moment (previously TimelineElement)
         //
         // Notes:
         // - There's only one "timeline element" for each collection of "thought elements"
 
-    	TimelineElement.getOrCreate(thought, function(err, timelineElement) {
+    	Story.getOrCreateMoment(thoughtPotential, function(err, moment) {
 
-    		// Create thought element
-    		ThoughtElement.createThoughtElement(thought, thoughtTemplate, function(err, thoughtElement) {
+    		// Create ThoughtPotential element
+    		Story.createThought(thoughtPotential, thoughtTemplate, function(err, thoughtElement) {
 
       			// Create timeline element
-      			console.log(timelineElement);
-      			timelineElement.populate({ path: 'element', model: timelineElement.elementType }, function(err, populatedElement) {
-      				if(timelineElement.elementType == 'Thought') {
+      			console.log(moment);
+      			moment.populate({ path: 'element', model: moment.elementType }, function(err, populatedElement) {
+      				if(moment.elementType == 'Thought') {
       					Thought.getPopulated2(populatedElement.element, function(err, populatedThought) {
-      						fn(err, timelineElement);
+      						fn(err, moment);
       					});
       				}
       			});
@@ -46,6 +55,105 @@ storySchema.statics.addThought = function(thoughtTemplate, fn) {
             });
 		});
 	});
+}
+
+storySchema.statics.createThought = function(thought, thoughtElementTemplate, fn) {
+
+	// Create thought node
+	ThoughtElement.create({
+		thought: thought,
+		reference: thoughtElementTemplate.reference || null,
+
+		text: thoughtElementTemplate.text,
+		author: thoughtElementTemplate.account
+
+	}, function(err, thoughtElement) {
+
+		// Save thought to datastore
+		console.log('Creating thought element.');
+		if (err) { console.log('Error creating thought element: ' + thoughtElement); }
+		console.log('Created thought element: ' + thoughtElement);
+
+		// Update latest thought
+		thought.latest = thoughtElement;
+		if(thought.first == null) { // For new thoughts, set the first thought.
+			thought.first = thoughtElement;
+		}
+		thought.save(function(err) {
+
+			console.log("Saved updated thought");
+			console.log(thought);
+
+			fn(null, thoughtElement);
+
+		});
+	});
+}
+
+storySchema.statics.getTimelineById = function(timelineId, fn) {
+
+	Timeline.findById(timelineId, function(err, timeline) {
+		if(err) throw err;
+		if (timeline === null)
+			fn("Could not find timeline.");
+
+		console.log(timeline);
+
+		// Create timeline element
+		fn(null, timeline);
+	});
+}
+
+// Create Moment for specified Timeline.
+// Creating a Moment for an existing Timeline also creates a new Timeline for 
+// which the created Moment is the "source" Moment.  Therefore every Moment is 
+// the source of a Timeline.
+storySchema.statics.getOrCreateMoment = function(element, fn) {
+
+	var Story = this;
+
+  console.log("Element?:");
+  console.log(element);
+
+  TimelineElement.findOne({ element: element, timeline: element.timeline }, function(err, existingTimelineElement) {
+    if(err) throw err;
+
+    console.log(existingTimelineElement);
+
+    // Check if a element exists with the specified ID.  If not, create a new element.
+    if(existingTimelineElement !== null) {
+      console.log("Found existing timeline element: " + existingTimelineElement);
+
+      // Create timeline element
+      fn(null, existingTimelineElement);
+
+    } else {
+
+      // Timeline element doesn't exist.  Create new timeline element.
+
+      var elementType = element.constructor.modelName;
+
+      // Save a new timeline element to datastore
+      var timelineElement = new TimelineElement({
+        timeline: element.timeline,
+        elementType: elementType,
+        element: element
+      });
+      console.log('Saving timeline element: ' + timelineElement);
+      timelineElement.save(function(err) {
+        // if(err) throw err;
+        if (err) { console.log('Error creating timeline element: ' + timelineElement); }
+        console.log('Created timeline element: ' + timelineElement);
+
+        // Create Timeline for Moment
+        Story.createMomentTimeline(timelineElement, function(err, momentTimeline) {
+
+	        // Create timeline element
+	        fn(null, timelineElement);
+	    });
+      });
+    }
+  });
 }
 
 // Create timeline for associated timeline element.
@@ -90,13 +198,13 @@ storySchema.statics.createTimelineByElement = function(element, fn) {
 	});
 }
 
-// Gets or creates thought.  Creates thought if doesn't exist.
+// Gets or creates thought potential.  Creates thought if doesn't exist.
 //
 // If creates a new thought, also:
 // - Creates new timeline for new thought
 // - Creates timeline element for new thought and new timeline
-storySchema.statics.getOrCreateThought = function(thoughtElementTemplate, fn) {
-
+storySchema.statics.getThoughtPotential = function(thoughtElementTemplate, fn) {
+ 
 	Thought.findById(thoughtElementTemplate.element, function(err, existingThought) {
 		if(err) throw err;
 
@@ -124,47 +232,53 @@ storySchema.statics.getOrCreateThought = function(thoughtElementTemplate, fn) {
 				if (err) { console.log('Error creating activity: ' + activity); }
 				console.log('Created activity: ' + activity);
 
-				// Create timeline for activity (always do this when creating any kind collection like a activity, but not elements in collections)
-				//
-				//     Logically:
-				//     1. Create Thought
-				//     2. Create TimelineElement for Thought
-				//     3. Create Timeline for TimelineElement
-
-				var timeline = Timeline();
-
-				timeline.save(function (err) {
-
-					// Check if error saving timeline
-					if (err) { console.log('Error creating timeline for element.'); }
-					console.log('Created timeline for element.');
-
-					// Update timeline for activity
-					// activity.timeline = timeline;
-
-					// activity.save(function(err) {
-
-					// Save a new timeline element to datastore
-	          		var timelineElement = new TimelineElement({
-	          			timeline: timeline,
-	          			elementType: activity.constructor.modelName,
-	          			element: activity
-	          		});
-
-	          		console.log('Saving timeline element: ' + timelineElement);
-	          		timelineElement.save(function(err) {
-	          			// if(err) throw err;
-	          			if (err) { console.log('Error creating timeline element: ' + timelineElement); }
-	          			console.log('Created timeline element: ' + timelineElement);
-
-						// Create timeline element
-						fn(null, activity);
-	          		});
-
-					// });
-				});
+				fn(null, activity);
 			});
 		}
+	});
+}
+
+// Create a new Timeline and a new Moment on that new Timeline for specified 
+// Activity.  This Activity will be associated with the first Moment 
+// on this Timeline (i.e., the new Moment this method creates).
+storySchema.statics.createMomentTimeline = function(moment, fn) {
+
+	// Get Activity associated with Moment
+	var activity = moment.element;
+	var activityType = moment.elementType;
+
+	// Create timeline for activity (always do this when creating any kind collection like a activity, but not elements in collections)
+	//
+	//     Logically:
+	//     (Previously, 1. Created Thought)
+	//     1. Create new Timeline pointing to specified Moment/TimelineElement
+	//     2. Create new Moment/TimelineElement pointing to new Timeline, associated with the same Activity as the specified Moment
+
+	Timeline.create({
+		element: moment
+
+	}, function (err, timeline) {
+
+		// Check if error saving timeline
+		if (err) { console.log('Error creating new timeline for moment.'); }
+		console.log('Created new timeline for moment.');
+
+		// Save a new timeline element to datastore
+  		var moment = new TimelineElement({
+  			timeline: timeline,
+  			elementType: activityType,
+  			element: activity
+  		});
+
+  		console.log('Saving moment: ' + moment);
+  		moment.save(function(err) {
+  			// if(err) throw err;
+  			if (err) { console.log('Error creating moment: ' + moment); }
+  			console.log('Created moment: ' + moment);
+
+			// Create timeline element
+			fn(null, activity);
+  		});
 	});
 }
 

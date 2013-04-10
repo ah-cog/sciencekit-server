@@ -3,32 +3,33 @@
 var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account')
+	, ThoughtFrame = require('../models/thought-frame')
 	, Thought = require('../models/thought')
-	, ThoughtElement = require('../models/thought-element');
-
-// TODO: Delete the following code when done testing... this shouldn't be public :-)
-exports.list = [
-	passport.authenticate('bearer', { session: false }),
-	function(req, res) {
-		// req.authInfo is set using the `info` argument supplied by
-	    // `BearerStrategy`.  It is typically used to indicate scope of the token,
-	    // and used in access control checks.  For illustrative purposes, this
-	    // example simply returns the scope in the response.
-		//Thought.findById(req.user.id, function(err, account) {
-		//Thought.find({}, function(err, thoughts) {
-		Thought.find({}).populate('author').exec(function(err, thoughts) {
-			res.json(thoughts);
-			// res.json({ user_id: req.user.id, name: req.user.name, scope: req.authInfo.scope })
-		});
-	}
-]
+	, Story = require('../models/story');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
 exports.create = [
-	passport.authenticate('bearer', { session: false }),
-	function(req, res) {
+    passport.authenticate('bearer', { session: false }),
+    function(req, res) {
+        // TODO: Make sure required parameters are present, correct
 
-		// TODO: Move from app.js to here... figure out how to wire in socket.io from here.
+        console.log(req.body);
 
-	}
+        Account.findById(req.user.id, function(err, account) {
+
+            var thoughtTemplate = req.body;
+            thoughtTemplate.account = account;
+            console.log("Received: ");
+            console.log(thoughtTemplate);
+            console.log("Timeline = %s", thoughtTemplate.timeline);
+
+            // TODO: Verify valid JSON
+            // TODO: Verify required fields for element are present
+
+            Story.addThought(thoughtTemplate, function(err, moment) {
+                res.json(moment);
+                io.sockets.emit('thought', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
+            });
+        });
+    }
 ]

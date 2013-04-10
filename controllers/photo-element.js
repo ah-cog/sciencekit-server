@@ -3,8 +3,7 @@
 var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account')
-	, Photo = require('../models/photo')
-	, PhotoElement = require('../models/photo-element')
+  , AccountAvatar = require('../models/account-avatar')
 	, Moment = require('../models/moment');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
@@ -12,44 +11,40 @@ exports.create = [
   passport.authenticate('bearer', { session: false }),
   function(req, res, next) {
 
-    var timeline = '5156b399cefe76e37d000001';
+    // var timeline = '5156b399cefe76e37d000001';
 
     console.log(req.files);
 
     Account.findById(req.user.id, function(err, account) {
       // res.json({ user_id: req.user.id, name: req.user.name, scope: req.authInfo.scope })
 
-      //var photoElementTemplate     = req.body;
-      var photoElementTemplate     = {};
-      var filenameStart = req.files.myphoto.path.indexOf("/photos");
-      photoElementTemplate.file = req.files.myphoto;
-      photoElementTemplate.uri = req.files.myphoto.path.substring(filenameStart);
-      photoElementTemplate.account = account;
-      // var filenameStart = req.files.myphoto.path.indexOf("/photos");
-      // var photoUri = req.files.myphoto.path.substring(filenameStart);
-      console.log("photoUri = " + photoElementTemplate.uri);
+      //var accountAvatarTemplate     = req.body;
+      var accountAvatarTemplate     = {};
+      var filenameStart = req.files.avatar.path.indexOf("/photos");
+      accountAvatarTemplate.file = req.files.avatar;
+      accountAvatarTemplate.uri = req.files.avatar.path.substring(filenameStart);
+      accountAvatarTemplate.account = account;
+      // var filenameStart = req.files.avatar.path.indexOf("/photos");
+      // var photoUri = req.files.avatar.path.substring(filenameStart);
+      console.log("photoUri = " + accountAvatarTemplate.uri);
 
 
 
 
 
 
-      // "Recall" thought, i.e., Get existing one with specified ID or create a new one.
-      Photo.getOrCreatePhoto(photoElementTemplate, function(err, photo) {
+      // Create thought element
+      AccountAvatar.createAvatar(photo, accountAvatarTemplate, function(err, accountAvatar) {
 
-        // Create thought element
-        PhotoElement.createPhotoElement(photo, photoElementTemplate, function(err, photoElement) {
+        // Create timeline element
+        // TODO: Only create one "timeline element" per "thought element"
+        
+        // Moment.createTimelineElement(timeline, photo, function(err, timelineElement) {
 
-          // Create timeline element
-          // TODO: Only create one "timeline element" per "thought element"
-          
-          Moment.createTimelineElement(timeline, photo, function(err, timelineElement) {
-
-            // Return result to clients
-            io.sockets.emit('photo', photoElement);
-            res.json(photoElement);
-          });
-        });
+          // Return result to clients
+          io.sockets.emit('accountavatar', accountAvatar);
+          res.json(accountAvatar);
+        // });
       });
 
       // // Create photo

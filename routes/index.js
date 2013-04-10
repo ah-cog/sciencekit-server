@@ -22,11 +22,11 @@ exports.timeline = [
 	function(req, res){
 		console.log(req.user);
 
-		models.Thought.find({}, function (err, thoughts) {
+		models.ThoughtFrame.find({}, function (err, thoughtFrames) {
 			if (err) { return done(err); }
 
-			console.log("Thoughts: " + thoughts);
-			res.render('timeline', { title: 'ScienceKit', user: req.user, thoughts: thoughts });
+			console.log("ThoughtFrames: " + thoughtFrames);
+			res.render('timeline', { title: 'ScienceKit', user: req.user, thoughts: thoughtFrames });
 
 		});
 	}

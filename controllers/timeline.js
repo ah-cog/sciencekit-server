@@ -5,10 +5,9 @@ var passport = require('passport')
 	, Account = require('../models/account.js')
 	, Timeline = require('../models/timeline')
 	, Moment = require('../models/moment')
-	, Thought = require('../models/thought')
+	, ThoughtFrame = require('../models/thought-frame')
 	, Photo = require('../models/photo')
 	, Thought = require('../models/thought')
-	, ThoughtElement = require('../models/thought-element')
 	, Story = require('../models/story');
 
 // TODO: Delete the following code when done testing... this shouldn't be public :-)
@@ -30,6 +29,7 @@ exports.read = [
 			// Lookup timeline for user
 			Moment.findOne({ element: req.user.id, elementType: 'Account' }, function(err, moment) {
 
+				// Create timeline for account if one doesn't exist
 				if (moment === null) {
 
 					// Create timeline for account
@@ -87,8 +87,8 @@ exports.read = [
 
 										// Populate JSON structure to return based on element types
 
-										if(element.elementType == 'Thought') {
-											Thought.getPopulated2(populatedElement.element, function(err, populatedThought) {
+										if(element.elementType === 'ThoughtFrame') {
+											ThoughtFrame.getPopulated2(populatedElement.element, function(err, populatedThoughtFrame) {
 
 												count--;
 
@@ -97,19 +97,19 @@ exports.read = [
 												}
 											});
 
-											// populatedElement.element.populate({ path: 'latest', model: 'ThoughtElement' }, function(err, populatedThought) {
-											// 	if (populatedThought !== null) {
+											// populatedElement.element.populate({ path: 'latest', model: 'Thought' }, function(err, populatedThoughtFrame) {
+											// 	if (populatedThoughtFrame !== null) {
 
-											// 		populatedThought.populate({ path: 'author' }, function(err, populatedAuthor) {
+											// 		populatedThoughtFrame.populate({ path: 'author' }, function(err, populatedAuthor) {
 											// 			if (populatedAuthor !== null) {
-											// 				//console.log(populatedThought);
+											// 				//console.log(populatedThoughtFrame);
 											// 				count--;
 
 											// 				if(count <= 0) { // "callback"
 											// 					res.json(moments);
 											// 				}
 											// 			} else {
-											// 				//console.log(populatedThought);
+											// 				//console.log(populatedThoughtFrame);
 											// 				count--;
 
 											// 				if(count <= 0) { // "callback"
@@ -121,8 +121,8 @@ exports.read = [
 											// });
 											
 										} else if(element.elementType == 'Photo') {
-											populatedElement.element.populate({ path: 'latest', model: 'PhotoElement' }, function(err, populatedThought) {
-												//console.log(populatedThought);
+											populatedElement.element.populate({ path: 'latest', model: 'PhotoElement' }, function(err, populatedThoughtFrame) {
+												//console.log(populatedThoughtFrame);
 												count--;
 
 												if(count <= 0) { // "callback"

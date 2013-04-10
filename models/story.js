@@ -1,8 +1,8 @@
 var mongoose = require('mongoose')
 , Timeline = require('./timeline')
 , Moment = require('./moment')
-, Thought = require('./thought')
-, ThoughtElement = require('./thought-element');
+, ThoughtFrame = require('./thought-frame')
+, Thought = require('./thought');
 
 var storySchema = new mongoose.Schema({
 	timeline: { type: mongoose.Schema.ObjectId, ref: 'Timeline', required: true },
@@ -25,23 +25,23 @@ storySchema.statics.addThought = function(thoughtTemplate, fn) {
 	var Story = this;
 
 	// Create thought collection.  "Recall" thought, i.e., Get existing one with specified ID or create a new one.
-	Story.getThoughtPotential(thoughtTemplate, function(err, thoughtPotential) {
+	Story.getThoughtFrame(thoughtTemplate, function(err, thoughtFrame) {
 
         // Create Moment (previously TimelineElement)
         //
         // Notes:
-        // - There's only one "timeline element" for each collection of "thought elements"
+        // - There's only one Moment per ThoughtFrame
 
-    	Story.getOrCreateMoment(thoughtPotential, function(err, moment) {
+    	Story.getOrCreateMoment(thoughtFrame, function(err, moment) {
 
-    		// Create ThoughtPotential element
-    		Story.createThought(thoughtPotential, thoughtTemplate, function(err, thoughtElement) {
+    		// Create Thought
+    		Story.createThought(thoughtFrame, thoughtTemplate, function(err, thought) {
 
-      			// Create timeline element
+      			// Create Moment on Timeline
       			console.log(moment);
       			moment.populate({ path: 'element', model: moment.elementType }, function(err, populatedElement) {
-      				if(moment.elementType == 'Thought') {
-      					Thought.getPopulated2(populatedElement.element, function(err, populatedThought) {
+      				if(moment.elementType === 'ThoughtFrame') {
+      					ThoughtFrame.getPopulated2(populatedElement.element, function(err, populatedThoughtFrame) {
       						fn(err, moment);
       					});
       				}
@@ -51,34 +51,34 @@ storySchema.statics.addThought = function(thoughtTemplate, fn) {
 	});
 }
 
-storySchema.statics.createThought = function(thought, thoughtElementTemplate, fn) {
+storySchema.statics.createThought = function(thoughtFrame, thoughtTemplate, fn) {
 
-	// Create thought node
-	ThoughtElement.create({
-		thought: thought,
-		reference: thoughtElementTemplate.reference || null,
+	// Create Thought
+	Thought.create({
+		frame: thoughtFrame,
+		reference: thoughtTemplate.reference || null,
 
-		text: thoughtElementTemplate.text,
-		author: thoughtElementTemplate.account
+		text: thoughtTemplate.text,
+		author: thoughtTemplate.account
 
-	}, function(err, thoughtElement) {
+	}, function(err, thought) {
 
-		// Save thought to datastore
-		console.log('Creating thought element.');
-		if (err) { console.log('Error creating thought element: ' + thoughtElement); }
-		console.log('Created thought element: ' + thoughtElement);
+		// Save Thought to datastore
+		console.log('Creating Thought.');
+		if (err) { console.log('Error creating Thought: ' + thought); }
+		console.log('Created Thought: ' + thought);
 
 		// Update latest thought
-		thought.latest = thoughtElement;
-		if(thought.first == null) { // For new thoughts, set the first thought.
-			thought.first = thoughtElement;
+		thoughtFrame.latest = thought;
+		if(thoughtFrame.first == null) { // For new Thoughts, set the first Thought.
+			thoughtFrame.first = thought;
 		}
-		thought.save(function(err) {
+		thoughtFrame.save(function(err) {
 
 			console.log("Saved updated thought");
-			console.log(thought);
+			console.log(thoughtFrame);
 
-			fn(null, thoughtElement);
+			fn(null, thought);
 
 		});
 	});
@@ -89,11 +89,10 @@ storySchema.statics.getTimelineById = function(timelineId, fn) {
 	Timeline.findById(timelineId, function(err, timeline) {
 		if(err) throw err;
 		if (timeline === null)
-			fn("Could not find timeline.");
+			fn("Could not find Timeline.");
 
 		console.log(timeline);
 
-		// Create timeline element
 		fn(null, timeline);
 	});
 }
@@ -102,21 +101,21 @@ storySchema.statics.getTimelineById = function(timelineId, fn) {
 // Creating a Moment for an existing Timeline also creates a new Timeline for 
 // which the created Moment is the "source" Moment.  Therefore every Moment is 
 // the source of a Timeline.
-storySchema.statics.getOrCreateMoment = function(element, fn) {
+storySchema.statics.getOrCreateMoment = function(frame, fn) {
 
 	var Story = this;
 
-  console.log("Element?:");
-  console.log(element);
+  console.log("Frame?:");
+  console.log(frame);
 
-  Moment.findOne({ element: element, timeline: element.timeline }, function(err, existingMoment) {
+  Moment.findOne({ element: frame, timeline: frame.timeline }, function(err, existingMoment) {
     if(err) throw err;
 
     console.log(existingMoment);
 
-    // Check if a element exists with the specified ID.  If not, create a new element.
+    // Check if a frame exists with the specified ID.  If not, create a new frame.
     if(existingMoment !== null) {
-      console.log("Found existing timeline element: " + existingMoment);
+      console.log("Found existing Moment: " + existingMoment);
 
       // Create timeline element
       fn(null, existingMoment);
@@ -125,24 +124,24 @@ storySchema.statics.getOrCreateMoment = function(element, fn) {
 
       // Timeline element doesn't exist.  Create new timeline element.
 
-      var elementType = element.constructor.modelName;
+      var elementType = frame.constructor.modelName;
 
       // Save a new timeline element to datastore
       var moment = new Moment({
-        timeline: element.timeline,
+        timeline: frame.timeline,
         elementType: elementType,
-        element: element
+        element: frame
       });
-      console.log('Saving timeline element: ' + moment);
+      console.log('Saving Moment: ' + moment);
       moment.save(function(err) {
         // if(err) throw err;
-        if (err) { console.log('Error creating timeline element: ' + moment); }
-        console.log('Created timeline element: ' + moment);
+        if (err) { console.log('Error creating Moment: ' + moment); }
+        console.log('Created Moment: ' + moment);
 
         // Create Timeline for Moment
         Story.createMomentTimeline(moment, function(err, momentTimeline) {
 
-	        // Create timeline element
+	        // Callback
 	        fn(null, moment);
 	    });
       });
@@ -150,40 +149,40 @@ storySchema.statics.getOrCreateMoment = function(element, fn) {
   });
 }
 
-// Create timeline for associated timeline element.
-storySchema.statics.createTimelineByElement = function(element, fn) {
+// Create Timeline for associated Activity.
+storySchema.statics.createTimelineByElement = function(activity, fn) {
 
-	// Get element type (i.e., the element model's name)
-	var elementType = element.constructor.modelName;
+	// Get Activity type (i.e., the particular Activity model's name)
+	var activityType = activity.constructor.modelName;
 
 	// Create timeline
 	var timeline = new Timeline();
 	timeline.save(function(err) {
 
-		// Save thought to datastore
-		console.log('Creating timeline for element: ' + element);
-		if (err) console.log('Error creating thought element: ' + element);
-		console.log('Created timeline for element: ' + element);
+		// Save Timeline to datastore
+		console.log('Creating Timeline for Activity: ' + activity);
+		if (err) console.log('Error creating Timeline for Activity: ' + activity);
+		console.log('Created Timeline for Activity: ' + activity);
 
-		// Create timeline element
+		// Create Moment
 		var moment = new Moment({
 			timeline: timeline,
-			element: element,
-			elementType: elementType
+			element: activity,
+			elementType: activityType
 		});
 
 		moment.save(function (err) {
 
-			// Save thought to datastore
-			console.log('Creating timeline element for element: ' + element);
-			if (err) console.log('Error creating thought element: ' + moment);
-			console.log('Created timeline element: ' + moment);
+			// Save Moment to datastore
+			console.log('Creating Timeline for Moment: ' + moment);
+			if (err) console.log('Error creating Timeline for Moment: ' + moment);
+			console.log('Created Timeline for Moment: ' + moment);
 
-			// Add timeline element to timeline
+			// Add new Moment to new Timeline
 			timeline.element = moment;
 			timeline.save(function (err) {
-				if (err) console.log('Could not save updated timeline.');
-				console.log('Saved timeline: ' + timeline)
+				if (err) console.log('Could not save updated Timeline.');
+				console.log('Saved Timeline: ' + timeline)
 			});
 
 			// Callback
@@ -192,37 +191,37 @@ storySchema.statics.createTimelineByElement = function(element, fn) {
 	});
 }
 
-// Gets or creates thought potential.  Creates thought if doesn't exist.
+// Gets or creates thought frame.  Creates thought if doesn't exist.
 //
 // If creates a new thought, also:
-// - Creates new timeline for new thought
-// - Creates timeline element for new thought and new timeline
-storySchema.statics.getThoughtPotential = function(thoughtElementTemplate, fn) {
+// - Creates new Timeline for new ThoughtFrame
+// - Creates Moment for new ThoughtFrame and new Timeline
+storySchema.statics.getThoughtFrame = function(thoughtTemplate, fn) {
  
-	Thought.findById(thoughtElementTemplate.element, function(err, existingThought) {
+	ThoughtFrame.findById(thoughtTemplate.element, function(err, existingThoughtFrame) {
 		if(err) throw err;
 
 		// Check if a thought exists with the specified ID.  If not, create a new thought.
-		if(existingThought !== null) {
-			console.log("Found existing thought: " + existingThought);
+		if(existingThoughtFrame !== null) {
+			console.log("Found existing ThoughtFrame: " + existingThoughtFrame);
 
-			// Create timeline element
-			fn(null, existingThought);
+			// Callback
+			fn(null, existingThoughtFrame);
 
 		} else {
 
 			// Store new thought to datastore
-			var activity = new Thought({
-				timeline: thoughtElementTemplate.timeline
+			var frame = new ThoughtFrame({
+				timeline: thoughtTemplate.timeline
 			});
 
-			activity.save(function(err) {
+			frame.save(function(err) {
 				// if(err) throw err;
-				console.log('Saving activity: ' + activity);
-				if (err) { console.log('Error creating activity: ' + activity); }
-				console.log('Created activity: ' + activity);
+				console.log('Saving frame: ' + frame);
+				if (err) { console.log('Error creating frame: ' + frame); }
+				console.log('Created frame: ' + frame);
 
-				fn(null, activity);
+				fn(null, frame);
 			});
 		}
 	});

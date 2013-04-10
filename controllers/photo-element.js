@@ -5,7 +5,7 @@ var passport = require('passport')
 	, Account = require('../models/account')
 	, Photo = require('../models/photo')
 	, PhotoElement = require('../models/photo-element')
-	, TimelineElement = require('../models/timeline-element');
+	, Moment = require('../models/moment');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
 exports.create = [
@@ -43,7 +43,7 @@ exports.create = [
           // Create timeline element
           // TODO: Only create one "timeline element" per "thought element"
           
-          TimelineElement.createTimelineElement(timeline, photo, function(err, timelineElement) {
+          Moment.createTimelineElement(timeline, photo, function(err, timelineElement) {
 
             // Return result to clients
             io.sockets.emit('photo', photoElement);

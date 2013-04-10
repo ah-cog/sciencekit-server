@@ -1,5 +1,5 @@
 var mongoose = require('mongoose')
-	, AccountSchema = require('./account');
+	, Moment = require('moment');
 
 var timelineSchema = new mongoose.Schema({
 

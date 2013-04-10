@@ -1,6 +1,6 @@
 var mongoose = require('mongoose')
 , Timeline = require('./timeline')
-, TimelineElement = require('./timeline-element')
+, Moment = require('./moment')
 , Thought = require('./thought')
 , ThoughtElement = require('./thought-element');
 
@@ -46,12 +46,6 @@ storySchema.statics.addThought = function(thoughtTemplate, fn) {
       					});
       				}
       			});
-
-	            // Thought.getPopulated(thought, function(err, updatedThought) {
-	            //   // Return result to clients
-	            //   io.sockets.emit('thought', updatedThought); // TODO: is this the wrong place?  better place?  guaranteed here?
-	            //   res.json(updatedThought);
-	            // });
             });
 		});
 	});
@@ -115,17 +109,17 @@ storySchema.statics.getOrCreateMoment = function(element, fn) {
   console.log("Element?:");
   console.log(element);
 
-  TimelineElement.findOne({ element: element, timeline: element.timeline }, function(err, existingTimelineElement) {
+  Moment.findOne({ element: element, timeline: element.timeline }, function(err, existingMoment) {
     if(err) throw err;
 
-    console.log(existingTimelineElement);
+    console.log(existingMoment);
 
     // Check if a element exists with the specified ID.  If not, create a new element.
-    if(existingTimelineElement !== null) {
-      console.log("Found existing timeline element: " + existingTimelineElement);
+    if(existingMoment !== null) {
+      console.log("Found existing timeline element: " + existingMoment);
 
       // Create timeline element
-      fn(null, existingTimelineElement);
+      fn(null, existingMoment);
 
     } else {
 
@@ -134,22 +128,22 @@ storySchema.statics.getOrCreateMoment = function(element, fn) {
       var elementType = element.constructor.modelName;
 
       // Save a new timeline element to datastore
-      var timelineElement = new TimelineElement({
+      var moment = new Moment({
         timeline: element.timeline,
         elementType: elementType,
         element: element
       });
-      console.log('Saving timeline element: ' + timelineElement);
-      timelineElement.save(function(err) {
+      console.log('Saving timeline element: ' + moment);
+      moment.save(function(err) {
         // if(err) throw err;
-        if (err) { console.log('Error creating timeline element: ' + timelineElement); }
-        console.log('Created timeline element: ' + timelineElement);
+        if (err) { console.log('Error creating timeline element: ' + moment); }
+        console.log('Created timeline element: ' + moment);
 
         // Create Timeline for Moment
-        Story.createMomentTimeline(timelineElement, function(err, momentTimeline) {
+        Story.createMomentTimeline(moment, function(err, momentTimeline) {
 
 	        // Create timeline element
-	        fn(null, timelineElement);
+	        fn(null, moment);
 	    });
       });
     }
@@ -163,7 +157,7 @@ storySchema.statics.createTimelineByElement = function(element, fn) {
 	var elementType = element.constructor.modelName;
 
 	// Create timeline
-	var timeline = new this();
+	var timeline = new Timeline();
 	timeline.save(function(err) {
 
 		// Save thought to datastore
@@ -172,21 +166,21 @@ storySchema.statics.createTimelineByElement = function(element, fn) {
 		console.log('Created timeline for element: ' + element);
 
 		// Create timeline element
-		var timelineElement = new TimelineElement({
+		var moment = new Moment({
 			timeline: timeline,
 			element: element,
 			elementType: elementType
 		});
 
-		timelineElement.save(function (err) {
+		moment.save(function (err) {
 
 			// Save thought to datastore
 			console.log('Creating timeline element for element: ' + element);
-			if (err) console.log('Error creating thought element: ' + timelineElement);
-			console.log('Created timeline element: ' + timelineElement);
+			if (err) console.log('Error creating thought element: ' + moment);
+			console.log('Created timeline element: ' + moment);
 
 			// Add timeline element to timeline
-			timeline.element = timelineElement;
+			timeline.element = moment;
 			timeline.save(function (err) {
 				if (err) console.log('Could not save updated timeline.');
 				console.log('Saved timeline: ' + timeline)
@@ -207,10 +201,6 @@ storySchema.statics.getThoughtPotential = function(thoughtElementTemplate, fn) {
  
 	Thought.findById(thoughtElementTemplate.element, function(err, existingThought) {
 		if(err) throw err;
-
-		console.log("Existing thought:");
-		console.log(thoughtElementTemplate.element);
-		console.log(existingThought);
 
 		// Check if a thought exists with the specified ID.  If not, create a new thought.
 		if(existingThought !== null) {
@@ -264,7 +254,7 @@ storySchema.statics.createMomentTimeline = function(moment, fn) {
 		console.log('Created new timeline for moment.');
 
 		// Save a new timeline element to datastore
-  		var moment = new TimelineElement({
+  		var moment = new Moment({
   			timeline: timeline,
   			elementType: activityType,
   			element: activity

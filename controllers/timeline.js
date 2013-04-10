@@ -4,11 +4,12 @@ var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account.js')
 	, Timeline = require('../models/timeline')
-	, TimelineElement = require('../models/timeline-element')
+	, Moment = require('../models/moment')
 	, Thought = require('../models/thought')
 	, Photo = require('../models/photo')
 	, Thought = require('../models/thought')
-	, ThoughtElement = require('../models/thought-element');
+	, ThoughtElement = require('../models/thought-element')
+	, Story = require('../models/story');
 
 // TODO: Delete the following code when done testing... this shouldn't be public :-)
 exports.read = [
@@ -27,11 +28,28 @@ exports.read = [
 		} else {
 			console.log("Lookup up timeline for account: " + req.user.id);
 			// Lookup timeline for user
-			TimelineElement.findOne({ element: req.user.id, elementType: 'Account' }, function(err, timelineElement) {
-				console.log('Found timeline element:' + timelineElement.id);
-				conditions['element'] = timelineElement.id;
+			Moment.findOne({ element: req.user.id, elementType: 'Account' }, function(err, moment) {
 
-				getTimeline();
+				if (moment === null) {
+
+					// Create timeline for account
+					Story.createTimelineByElement(req.user, function(err, timeline) {
+
+						Moment.findOne({ element: req.user.id, elementType: 'Account' }, function(err, moment) {
+							console.log('Found timeline element:' + moment.id);
+							conditions['element'] = moment.id;
+
+							getTimeline();
+						});
+					});
+
+				} else {
+
+					console.log('Found timeline element:' + moment.id);
+					conditions['element'] = moment.id;
+
+					getTimeline();
+				}
 			});
 		}
 
@@ -51,16 +69,16 @@ exports.read = [
 
 					// Get timeline elements
 					// TODO: Optimize.  There's got to be a better way! Maybe asynchronous? Maybe use sockets for streaming data back? Create "async" version of API and HTTP request-based one?
-					TimelineElement.find({ timeline: timeline.id }).sort('date').exec(function(err, elements) {
-						if (elements !== null && elements.length > 0) {
+					Moment.find({ timeline: timeline.id }).sort('date').exec(function(err, moments) {
+						if (moments !== null && moments.length > 0) {
 
 							// Populate the timeline
-							var count = elements.length; // Hacky. Optimize!
-							elements.forEach(function (element) {
+							var count = moments.length; // Hacky. Optimize!
+							moments.forEach(function (element) {
 
 								//console.log(element);
 
-								// Populate the elements in the timeline
+								// Populate the moments in the timeline
 								// console.log('%s is a %s', element.element, element.elementType);
 								element.populate({ path: 'element', model: element.elementType }, function(err, populatedElement) {
 									if (populatedElement !== null && populatedElement.element !== null) {
@@ -75,7 +93,7 @@ exports.read = [
 												count--;
 
 												if(count <= 0) { // "callback"
-													res.json(elements);
+													res.json(moments);
 												}
 											});
 
@@ -88,14 +106,14 @@ exports.read = [
 											// 				count--;
 
 											// 				if(count <= 0) { // "callback"
-											// 					res.json(elements);
+											// 					res.json(moments);
 											// 				}
 											// 			} else {
 											// 				//console.log(populatedThought);
 											// 				count--;
 
 											// 				if(count <= 0) { // "callback"
-											// 					res.json(elements);
+											// 					res.json(moments);
 											// 				}
 											// 			}
 											// 		});
@@ -108,7 +126,7 @@ exports.read = [
 												count--;
 
 												if(count <= 0) { // "callback"
-													res.json(elements);
+													res.json(moments);
 												}
 											});
 										} else {
@@ -116,14 +134,14 @@ exports.read = [
 
 											if(count <= 0) {
 												// "callback"
-												res.json(elements);
+												res.json(moments);
 											}
 										}
 									} else {
 										count--;
 										if(count <= 0) {
 											// "callback"
-											res.json(elements);
+											res.json(moments);
 										}
 									}
 								});

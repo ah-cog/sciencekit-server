@@ -21,7 +21,6 @@ var AccessToken = require('./models/accesstoken')
   , Client = require('./models/client')
   , Thought = require('./models/thought')
   , ThoughtElement = require('./models/thought-element') // a crumb is an atom, it's part of a story
-  , TimelineElement = require('./models/timeline-element')
   , Photo = require('./models/photo')
   , PhotoElement = require('./models/photo-element');
 
@@ -240,7 +239,8 @@ app.post('/api/client/create', function(req, res, next) {
 // [Source: http://www.html5rocks.com/en/tutorials/cors/]
 // [Source: http://stackoverflow.com/questions/11001817/allow-cors-rest-request-to-a-express-node-js-application-on-heroku]
 app.all('/api/*', function(req, res, next) {
-    console.log('Received API request: ' + req);
+    //console.log('Received API request: ');
+    //console.log(req);
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.header("Access-Control-Allow-Headers", "X-Requested-With, Authorization, Content-Type"); // TODO: Remove "Authorization" to this to make more secure!

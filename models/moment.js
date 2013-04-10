@@ -1,17 +1,16 @@
-var mongoose = require('mongoose')
-	, Timeline = require('./timeline');
+var mongoose = require('mongoose');
 
-var timelineElementSchema = new mongoose.Schema({
-	timeline: { type: mongoose.Schema.ObjectId, ref: 'Timeline', required: true }, // Timeline upon which this event occurred (not the one created for this event)
+var momentSchema = new mongoose.Schema({
+    timeline: { type: mongoose.Schema.ObjectId, ref: 'Timeline', required: true }, // Timeline upon which this event occurred (not the one created for this event)
 
 	element: { type: mongoose.Schema.Types.ObjectId, required: true }, // i.e., the referenced object itself
 	elementType: { type: String, required: true }, // i.e., the "ref" value, e.g., 'Thought'
 
-	date: { type: Date, default: Date.now },
+    date: { type: Date, default: Date.now },
 	hidden: Boolean
 });
 
-timelineElementSchema.statics.createTimelineElement = function(timeline, element, fn) {
+momentSchema.statics.createTimelineElement = function(timeline, element, fn) {
 
   var elementType = element.constructor.modelName;
 
@@ -31,4 +30,4 @@ timelineElementSchema.statics.createTimelineElement = function(timeline, element
   });
 }
 
-module.exports = mongoose.model('TimelineElement', timelineElementSchema); // Compile schema to a model
+module.exports = mongoose.model('Moment', momentSchema); // Compile schema to a model

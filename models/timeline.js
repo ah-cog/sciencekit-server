@@ -4,7 +4,7 @@ var mongoose = require('mongoose')
 var timelineSchema = new mongoose.Schema({
 
 	// Element with which the timeline starts (i.e., the first timeline element)
-	element: { type: mongoose.Schema.Types.ObjectId, ref: 'TimelineElement' },
+	moment: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
 
 	hidden: { type: Boolean, default: false },
 	date: { type: Date, default: Date.now }

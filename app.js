@@ -21,8 +21,8 @@ var AccessToken = require('./models/accesstoken')
   , Client = require('./models/client')
   , ThoughtFrame = require('./models/thought-frame')
   , Thought = require('./models/thought') // a crumb is an atom, it's part of a story
-  , Photo = require('./models/photo')
-  , PhotoElement = require('./models/photo-element');
+  , PhotoFrame = require('./models/photo-frame')
+  , Photo = require('./models/photo');
 
 
 
@@ -256,16 +256,14 @@ app.all('/api/*', function(req, res, next) {
 
 // Resource Server (this is an OAuth2 term)
 // The resource server stores the protected resources (API URIs that require authentication).
-app.get('/api/account', controllers.account.read);
-//app.post('/api/account/avatar', controllers.account_avatar.create);
+app.get('/api/account',   controllers.account.read);
 
-app.get ('/api/timeline',        controllers.timeline.read);
-//app.get('/api/thought',  controllers.thoughtFrame.list);
-app.post('/api/thought', controllers.thought.create);
+app.get('/api/timeline',  controllers.timeline.read);
+app.post('/api/thought',  controllers.thought.create);
 
-app.get('/api/photo',     controllers.photo.list);
-app.post('/api/photo',    controllers.photo_element.create);
-app.get('/api/photo/:id', controllers.photo.read);
+app.get('/api/photo',     controllers.PhotoFrame.list);
+app.post('/api/photo',    controllers.Photo.create);
+app.get('/api/photo/:id', controllers.PhotoFrame.read);
 
 
 

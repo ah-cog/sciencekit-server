@@ -6,6 +6,7 @@ var passport = require('passport')
 	, Timeline = require('../models/timeline')
 	, Moment = require('../models/moment')
 	, ThoughtFrame = require('../models/thought-frame')
+	, PhotoFrame = require('../models/photo-frame')
 	, Photo = require('../models/photo')
 	, Thought = require('../models/thought')
 	, Story = require('../models/story');
@@ -20,8 +21,8 @@ exports.read = [
 			conditions['_id'] = req.query['id'];
 
 			getTimeline();
-		} else if (req.query['element_id']) {
-			conditions['element'] = req.query['element_id'];
+		} else if (req.query['moment_id']) {
+			conditions['moment'] = req.query['moment_id'];
 
 			getTimeline();
 		} else {
@@ -37,7 +38,7 @@ exports.read = [
 
 						Moment.findOne({ element: req.user.id, elementType: 'Account' }, function(err, moment) {
 							console.log('Found timeline element:' + moment.id);
-							conditions['element'] = moment.id;
+							conditions['moment'] = moment.id;
 
 							getTimeline();
 						});
@@ -45,8 +46,8 @@ exports.read = [
 
 				} else {
 
-					console.log('Found timeline element:' + moment.id);
-					conditions['element'] = moment.id;
+					console.log('Found Moment:' + moment.id);
+					conditions['moment'] = moment.id;
 
 					getTimeline();
 				}
@@ -74,20 +75,20 @@ exports.read = [
 
 							// Populate the timeline
 							var count = moments.length; // Hacky. Optimize!
-							moments.forEach(function (element) {
+							moments.forEach(function (moment) {
 
 								//console.log(element);
 
 								// Populate the moments in the timeline
 								// console.log('%s is a %s', element.element, element.elementType);
-								element.populate({ path: 'element', model: element.elementType }, function(err, populatedElement) {
+								moment.populate({ path: 'element', model: moment.elementType }, function(err, populatedElement) {
 									if (populatedElement !== null && populatedElement.element !== null) {
 
 										// console.log("==> popped: " + populatedElement);
 
 										// Populate JSON structure to return based on element types
 
-										if(element.elementType === 'ThoughtFrame') {
+										if(moment.elementType === 'ThoughtFrame') {
 											ThoughtFrame.getPopulated2(populatedElement.element, function(err, populatedThoughtFrame) {
 
 												count--;
@@ -96,32 +97,10 @@ exports.read = [
 													res.json(moments);
 												}
 											});
-
-											// populatedElement.element.populate({ path: 'latest', model: 'Thought' }, function(err, populatedThoughtFrame) {
-											// 	if (populatedThoughtFrame !== null) {
-
-											// 		populatedThoughtFrame.populate({ path: 'author' }, function(err, populatedAuthor) {
-											// 			if (populatedAuthor !== null) {
-											// 				//console.log(populatedThoughtFrame);
-											// 				count--;
-
-											// 				if(count <= 0) { // "callback"
-											// 					res.json(moments);
-											// 				}
-											// 			} else {
-											// 				//console.log(populatedThoughtFrame);
-											// 				count--;
-
-											// 				if(count <= 0) { // "callback"
-											// 					res.json(moments);
-											// 				}
-											// 			}
-											// 		});
-											// 	}
-											// });
 											
-										} else if(element.elementType == 'Photo') {
-											populatedElement.element.populate({ path: 'latest', model: 'PhotoElement' }, function(err, populatedThoughtFrame) {
+										} else if(moment.elementType === 'PhotoFrame') {
+											console.log("PHOTO FRAME");
+											moment.element.populate({ path: 'latest', model: 'Photo' }, function(err, populatedPhoto) {
 												//console.log(populatedThoughtFrame);
 												count--;
 
@@ -169,7 +148,7 @@ exports.create = [
 
 		// Create timeline
 		Timeline.create({
-			element: timelineTemplate.element,
+			moment: timelineTemplate.moment,
 			elementType: timelineTemplate.elementType
 		}, function(err, timeline) {
 			console.log('Creating timeline: ' + timeline);

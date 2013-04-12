@@ -27,8 +27,8 @@ exports.create = [
             // TODO: Verify required fields for element are present
 
             Story.addThought(thoughtTemplate, function(err, moment) {
-                res.json(moment);
                 io.sockets.emit('thought', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
+                res.json(moment);
             });
         });
     }

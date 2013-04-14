@@ -27,7 +27,7 @@ exports.create = [
     Account.findById(req.user.id, function(err, account) {
 
       var photoTemplate      = {};
-      var filenameStart      = req.files.myphoto.path.indexOf("/photos");
+      var filenameStart      = req.files.myphoto.path.indexOf("/uploads");
       photoTemplate.file     = req.files.myphoto;
       photoTemplate.uri      = req.files.myphoto.path.substring(filenameStart);
       photoTemplate.timeline = timeline;

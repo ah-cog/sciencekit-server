@@ -6,6 +6,7 @@ var passport = require('passport')
 	, Timeline = require('../models/timeline')
 	, Moment = require('../models/moment')
 	, ThoughtFrame = require('../models/thought-frame')
+	, TopicFrame = require('../models/topic-frame')
 	, PhotoFrame = require('../models/photo-frame')
 	, Photo = require('../models/photo')
 	, Thought = require('../models/thought')
@@ -98,10 +99,29 @@ exports.read = [
 												}
 											});
 											
+										} else if(moment.elementType === 'TopicFrame') {
+											TopicFrame.getPopulated2(populatedElement.element, function(err, populatedTopicFrame) {
+
+												count--;
+
+												if(count <= 0) { // "callback"
+													res.json(moments);
+												}
+											});
+											
 										} else if(moment.elementType === 'PhotoFrame') {
-											console.log("PHOTO FRAME");
+											console.log(" POPULATING PHOTO FRAME");
 											moment.element.populate({ path: 'latest', model: 'Photo' }, function(err, populatedPhoto) {
 												//console.log(populatedThoughtFrame);
+												count--;
+
+												if(count <= 0) { // "callback"
+													res.json(moments);
+												}
+											});
+										} else if(moment.elementType === 'VideoFrame') {
+											console.log("POPULATING VIDEO FRAME");
+											moment.element.populate({ path: 'last', model: 'Video' }, function(err, populatedPhoto) {
 												count--;
 
 												if(count <= 0) { // "callback"

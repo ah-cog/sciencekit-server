@@ -1,10 +1,14 @@
 var mongoose = require('mongoose')
-, Timeline = require('./timeline')
-, Moment = require('./moment')
-, ThoughtFrame = require('./thought-frame')
-, Thought = require('./thought')
-, PhotoFrame = require('./photo-frame')
-, Photo = require('./photo');
+	, Timeline = require('./timeline')
+	, Moment = require('./moment')
+	, ThoughtFrame = require('./thought-frame')
+	, Thought = require('./thought')
+	, PhotoFrame = require('./photo-frame')
+	, Photo = require('./photo')
+	, VideoFrame = require('./video-frame')
+	, Video = require('./video')
+	, TopicFrame = require('./topic-frame')
+	, Topic = require('./topic');
 
 var storySchema = new mongoose.Schema({
 	timeline: { type: mongoose.Schema.ObjectId, ref: 'Timeline', required: true },
@@ -403,6 +407,244 @@ storySchema.statics.createPhoto = function(photoFrame, photoTemplate, fn) {
 
 			});
 
+	});
+}
+
+
+
+
+// Video
+
+// Add Video to Story.
+// This consists of creating the Video and setting up associated models and relationships.
+
+storySchema.statics.addVideo = function(videoTemplate, fn) {
+	console.log("addVideo");
+
+	// Make sure all required properties are present
+	if (!videoTemplate.hasOwnProperty('timeline')) {
+		console.log('Cannot add Video.  One or more required properties are missing.');
+		fn('Cannot add Video.  One or more required properties are missing.');
+	}
+
+	var Story = this;
+
+	// "Recall" VideoFrame, i.e., Get existing one with specified ID or create a new one.
+	Story.getOrCreateVideoFrame(videoTemplate, function(err, videoFrame) {
+
+        // Create Moment
+        //
+        // Notes:
+        // - There's only one Moment per VideoFrame
+
+    	Story.getOrCreateMoment(videoFrame, function(err, moment) {
+
+    		// Create Video
+    		Story.createVideo(videoFrame, videoTemplate, function(err, video) {
+
+      			// Create Moment on Timeline
+      			console.log(moment);
+      			moment.populate({ path: 'element', model: moment.elementType }, function (err, populatedElement) {
+      				if(moment.elementType === 'VideoFrame') {
+      					VideoFrame.getPopulated2(populatedElement.element, function (err, populatedVideoFrame) {
+      						fn(err, moment);
+      					});
+      				}
+      			});
+            });
+		});
+	});
+}
+
+storySchema.statics.getOrCreateVideoFrame = function(videoTemplate, fn) {
+	console.log("getOrCreateVideoFrame");
+
+	// Set model for activity frame
+	var FrameModel = VideoFrame;
+
+	// Get frame
+	FrameModel.findById(videoTemplate.element, function(err, existingFrame) {
+		if(err) throw err;
+
+		// Check if a photo exists with the specified ID.  If not, create a new photo.
+		if(existingFrame !== null) {
+			console.log("Found existing PhotoFrame: " + existingFrame);
+
+			// Callback
+			fn(null, existingFrame);
+
+		} else {
+
+			// Save a new photo to datastore
+			var frame = new FrameModel({
+				timeline: videoTemplate.timeline
+			});
+
+			frame.save(function(err) {
+				// if(err) throw err;
+				console.log('Saving PhotoFrame: ' + frame);
+				if (err) { console.log('Error creating PhotoFrame: ' + frame); }
+				console.log('Created PhotoFrame: ' + frame);
+
+				// Create timeline element (always do this when creating any kind collection like a thought, but not elements in collections)
+				// TODO: Move this elsewhere and add a callback parameter for further calls
+
+				// Create timeline element
+				fn(null, frame);
+
+			});
+		}
+	});
+}
+
+storySchema.statics.createVideo = function(videoFrame, videoTemplate, fn) {
+	console.log("createVideo");
+
+	// Create Video
+	Video.create({
+
+		frame: videoFrame,
+		reference: videoTemplate.reference || null,
+
+		uri: videoTemplate.uri,
+
+		author: videoTemplate.account
+
+	}, function(err, video) {
+
+			// Save Video to database
+			console.log('Creating Video.');
+			if (err) { console.log('Error creating Video: ' + video); }
+			console.log('Created Video: ' + video);
+
+			// Update last Video in VideoFrame
+			videoFrame.last = video;
+			if(videoFrame.first == null) { // For new Thoughts, set the first Thought.
+				videoFrame.first = video;
+			}
+			videoFrame.save(function(err) {
+
+				console.log("Saved updated VideoFrame");
+				console.log(videoFrame);
+
+				fn(null, video);
+
+			});
+
+	});
+}
+
+
+
+
+// Topic
+
+// Add Topic to Story.
+// This consists of creating the Topic and setting up associated models  
+// and relationships.
+storySchema.statics.addTopic = function(topicTemplate, fn) {
+
+	// Make sure all required properties are present
+	if (!topicTemplate.hasOwnProperty('text') || !topicTemplate.hasOwnProperty('timeline')) {
+		console.log('Cannot add Topic.  Required properties are missing.');
+		fn('Cannot add Topic.  Required properties are missing.');
+	}
+
+	var Story = this;
+
+	// "Recall" Topic, i.e., Get existing one with specified ID or create a new one.
+	Story.getTopicFrame(topicTemplate, function(err, topicFrame) {
+
+        // Create Moment
+        //
+        // Notes:
+        // - There's only one Moment per TopicFrame
+
+    	Story.getOrCreateMoment(topicFrame, function(err, moment) {
+
+    		// Create Topic
+    		Story.createTopic(topicFrame, topicTemplate, function(err, topic) {
+
+      			// Create Moment on Timeline
+      			console.log(moment);
+      			moment.populate({ path: 'element', model: moment.elementType }, function(err, populatedElement) {
+      				if(moment.elementType === 'TopicFrame') {
+      					TopicFrame.getPopulated2(populatedElement.element, function(err, populatedTopicFrame) {
+      						fn(err, moment);
+      					});
+      				}
+      			});
+            });
+		});
+	});
+}
+
+storySchema.statics.createTopic = function(topicFrame, topicTemplate, fn) {
+
+	// Create Topic
+	Topic.create({
+		frame: topicFrame,
+		reference: topicTemplate.reference || null,
+
+		text: topicTemplate.text,
+		author: topicTemplate.account
+
+	}, function(err, topic) {
+
+		// Save Topic to datastore
+		console.log('Creating Topic.');
+		if (err) { console.log('Error creating Topic: ' + topic); }
+		console.log('Created Topic: ' + topic);
+
+		// Update last Topic
+		topicFrame.last = topic;
+		if(topicFrame.first == null) { // For new Topics, set the first Topic.
+			topicFrame.first = topic;
+		}
+		topicFrame.save(function(err) {
+
+			console.log("Saved updated Topic");
+			console.log(topicFrame);
+
+			fn(null, topic);
+
+		});
+	});
+}
+
+// Gets or creates TopicFrame.  Creates TopicFrame if doesn't exist.
+//
+// If creates a new TopicFrame, also:
+// - Creates new Timeline for new TopicFrame
+// - Creates Moment for new TopicFrame and new Timeline
+storySchema.statics.getTopicFrame = function(topicTemplate, fn) {
+ 
+	TopicFrame.findById(topicTemplate.element, function(err, existingFrame) {
+		if(err) throw err;
+
+		// Check if a Topic exists with the specified ID.  If not, create a new Topic.
+		if(existingFrame !== null) {
+			console.log("Found existing TopicFrame: " + existingFrame);
+
+			// Callback
+			fn(null, existingFrame);
+
+		} else {
+
+			// Store new frame to database
+			var frame = new TopicFrame({
+				timeline: topicTemplate.timeline
+			});
+
+			frame.save(function(err) {
+				// if(err) throw err;
+				console.log('Saving frame: ' + frame);
+				if (err) { console.log('Error creating frame: ' + frame); }
+				console.log('Created frame: ' + frame);
+
+				fn(null, frame);
+			});
+		}
 	});
 }
 

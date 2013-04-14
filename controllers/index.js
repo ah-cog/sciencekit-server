@@ -4,3 +4,6 @@ exports.timeline = require('./timeline');
 exports.thought = require('./thought');
 exports.PhotoFrame = require('./photo-frame');
 exports.Photo = require('./photo');
+exports.Avatar = require('./avatar');
+exports.Topic = require('./topic');
+exports.Video = require('./video');

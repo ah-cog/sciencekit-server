@@ -88,7 +88,7 @@ app.configure(function() {
     app.use(express.favicon());
     app.use(express.logger('dev'));
     app.use(express.bodyParser({
-        uploadDir: __dirname + '/public/photos',
+        uploadDir: __dirname + '/public/uploads',
         keepExtensions: true
     }));
     // app.use(express.limit('5mb'));
@@ -246,7 +246,7 @@ app.all('/api/*', function(req, res, next) {
     res.header("Access-Control-Allow-Headers", "X-Requested-With, Authorization, Content-Type"); // TODO: Remove "Authorization" to this to make more secure!
     res.header("Access-Control-Max-Age", "3628800");
 
-    // Intercept OPTIONS method (for CORS "preflight" request)
+    // Intercept OPTIONS'tho method (for CORS "preflight" request)
     if(req.method === 'OPTIONS') {
         res.send(200);
     } else {
@@ -257,13 +257,18 @@ app.all('/api/*', function(req, res, next) {
 // Resource Server (this is an OAuth2 term)
 // The resource server stores the protected resources (API URIs that require authentication).
 app.get('/api/account',   controllers.account.read);
+app.post('/api/account/avatar',   controllers.Avatar.create);
+app.get('/api/account/avatar',   controllers.Avatar.read);
 
 app.get('/api/timeline',  controllers.timeline.read);
 app.post('/api/thought',  controllers.thought.create);
+app.post('/api/topic',  controllers.Topic.create);
 
 app.get('/api/photo',     controllers.PhotoFrame.list);
 app.post('/api/photo',    controllers.Photo.create);
 app.get('/api/photo/:id', controllers.PhotoFrame.read);
+
+app.post('/api/video',    controllers.Video.create);
 
 
 

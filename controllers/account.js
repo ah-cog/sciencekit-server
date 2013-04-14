@@ -3,7 +3,8 @@
 var passport = require('passport')
 	, bcrypt = require('bcrypt')
 	, Account = require('../models/account')
-	, Story = require('../models/story');
+	, Story = require('../models/story')
+	, Client = require('../models/client');
 
 // TODO: Delete the following code when done testing... this shouldn't be public :-)
 exports.read = [
@@ -52,7 +53,7 @@ exports.create = function(req, res) {
 						name: 'ScienceKit Client',
 						clientId: 'abc123',
 						clientSecret: 'ssh-secret'
-						
+
 					}, function(err, client) {
 
 						// Create timeline for account

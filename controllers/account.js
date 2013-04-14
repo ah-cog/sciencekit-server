@@ -47,14 +47,24 @@ exports.create = function(req, res) {
 						res.redirect('/signup');
 					}
 
-					// Create timeline for account
-					Story.createTimelineByElement(account, function(err, timeline) {
-						if (err) {
-							console.log('Error creating timeline for new account:' + account);
-						}
+					// Create client for account (for authentication using OAuth2)
+					Client.create({
+						name: 'ScienceKit Client',
+						clientId: 'abc123',
+						clientSecret: 'ssh-secret'
+						
+					}, function(err, client) {
 
-						console.log('Created account: ' + account);
-						res.redirect('/timeline');
+						// Create timeline for account
+						Story.createTimelineByElement(account, function(err, timeline) {
+							if (err) {
+								console.log('Error creating timeline for new account:' + account);
+							}
+
+							console.log('Created account: ' + account);
+							res.redirect('/timeline');
+						});
+
 					});
 				});
 		    });

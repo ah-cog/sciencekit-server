@@ -141,8 +141,8 @@ app.get('/', routes.index);
 //   res.send('yay');
 // });
 
-// This is for developers only... so not needed here?
-// app.get('/api/clients',
+//This is for developers only... so not needed here?
+// app.get('/api/account/client',
 //   passport.authenticate('user', { session: false }),
 //   function(req, res) {
 //     console.log('Received API request: ' + req);

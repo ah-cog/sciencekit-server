@@ -140,6 +140,12 @@ exports.authorization = [
 
     // Find client by clientID
     Client.findOne({ 'clientId': clientId }, function(err, client) {
+
+      // Create client if none exists
+      if (client === null) {
+        console.log("No client exists with specified ID.");
+      }
+
       console.log("Found client " + client);
       if (err) { return done(err); }
       // WARNING: For security purposes, it is highly advisable to check that
@@ -150,7 +156,7 @@ exports.authorization = [
     });
 
   }),
-  function(req, res){
+  function(req, res) {
     res.render('dialog', { transactionID: req.oauth2.transactionID, user: req.user, myclient: req.oauth2.client });
   }
 ]

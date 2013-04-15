@@ -1,26 +1,16 @@
 extends layout
 
 block content
-	img(src="/images/sciencekit-logo.png", alt="sciencekit logo")
-	p(class="tagline") tell your story
-	- if(user)
-		p Hello #{ user.name }.
-		p
-			a(href="/logout") logout
-			br
-			a(href="/timeline") timeline
+	img(src="/images/sciencekit-beta-logo.png", alt="sciencekit logo")
+	p(style="font-size: 20px;")
+		| ScienceKit is a real-time collaborative science learning technology being built at the <a href="http://www.cs.umd.edu/hcil/">Human-Computer Interaction Lab</a> at the University of Maryland, College Park.  ScienceKit provides a framework for children to learn about and explore science through storytelling.  The storytelling activity is being designed to gently guide children to consider scientific concepts as they assemble and craft their stories through the activities that make up their everyday experiences and guide their aspirations.  ScienceKit builds on a previous research effort called <a href="http://www.cs.umd.edu/hcil/sinq/">SINQ</a> and draws conceptual inspiration from <a href="https://itunes.apple.com/us/app/storykit/id329374595?mt=8">StoryKit</a>.
 
-		hr
+	p(style="font-size: 30px;")
+		| try it now
+	p(style="font-size: 20px;")
+		| You can <strong><a href="http://tflig.ht/Xt9ip1">sign up</a></strong> for beta testing on TestFlight.  We use TestFlight to distribute beta releases of ScienceKit.  Once you sign up, you'll receive beta releases of ScienceKit.  You can play with these releases to help us catch nasty bugs and suggest ways to make ScienceKit a pleasant experience.
 
-		//p
-		//	b Settings
-
-		//p Add client (who should have to create this? developer (me)?  each school deployment (their "developers/admins")?  each user? ) [from device or from desktop, with web access?]
-		
-		a(href="/oauth/exchange") authorize ScienceKit
-
-	- else
-		p(class='login-step') 1. 
-			a(href="/signup") signup
-		p(class='login-step') 2. 
-			a(href="/login") login
+	p(style="font-size: 30px;")
+		| thanks
+	p(style="font-size: 20px;")
+		| Thanks for peeking at ScienceKit.  Feel free to get in touch with the research team about ScienceKit.  We are <a href="http://twitter.com/tlclegg">@tlclegg</a>, <a href="http://twitter.com/mokogobo">@mokogobo</a>, and <a href="https://twitter.com/jasoncyip">@jasoncyip</a>.

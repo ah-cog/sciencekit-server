@@ -49,6 +49,81 @@ a:hover {
   border-style: solid;
   font-size: 20px;
 }
+.red,
+.orange,
+.yellow,
+.green,
+.blue,
+.indigo,
+.violet,
+h1.auth {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
+  font-size: 50px;
+  -webkit-font-smoothing: antialiased;
+}
+p.auth {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
+  font-size: 30px;
+  -webkit-font-smoothing: antialiased;
+}
+span.auth {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
+  font-size: 30px;
+  -webkit-font-smoothing: antialiased;
+  background-color: #ededed;
+  border-radius: 16px;
+  display: inline-block;
+  color: #777;
+  font-family: arial;
+  padding: 16px 34px;
+  text-decoration: none;
+}
+span.auth:hover {
+  background-color: #dfdfdf;
+}
+span.auth:active {
+  position: relative;
+  top: 1px;
+}
+.text-input-widget {
+  padding: 10px 8px 10px 8px;
+  margin: 4px 40px 4px 40px;
+  border-width: 1px;
+  border-color: #ddd;
+  border-style: solid;
+  font-size: 20px;
+  border-radius: 8px;
+}
+.text-input-widget input[type="text"] {
+  width: 100%;
+  font-size: 35px;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  padding: 10px;
+  margin: 5px;
+  border: 0px solid #ddd;
+  border-radius: 8px;
+}
+.text-input-widget input[type="password"] {
+  width: 100%;
+  font-size: 35px;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  padding: 10px;
+  margin: 5px;
+  border: 0px solid #ddd;
+  border-radius: 8px;
+}
+.element {
+  padding: 5px;
+  margin: 10px;
+  border-width: 1px;
+  border-color: #a578b7;
+  border-style: solid;
+  font-size: 20px;
+  border-radius: 4px;
+}
 .question-view-port {
   border-radius: 4px;
   padding: 5px;

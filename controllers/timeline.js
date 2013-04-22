@@ -69,6 +69,11 @@ exports.read = [
 						return res.json({});
 					}
 
+					// Response
+					var result = {};
+					result._id = timeline._id;
+					result.moment = timeline.moment;
+
 					// Get timeline elements
 					// TODO: Optimize.  There's got to be a better way! Maybe asynchronous? Maybe use sockets for streaming data back? Create "async" version of API and HTTP request-based one?
 					Moment.find({ timeline: timeline.id }).sort('date').exec(function(err, moments) {
@@ -95,7 +100,8 @@ exports.read = [
 												count--;
 
 												if(count <= 0) { // "callback"
-													res.json(moments);
+													result.moments = moments;
+													res.json(result);
 												}
 											});
 											
@@ -105,7 +111,8 @@ exports.read = [
 												count--;
 
 												if(count <= 0) { // "callback"
-													res.json(moments);
+													result.moments = moments;
+													res.json(result);
 												}
 											});
 											
@@ -116,7 +123,8 @@ exports.read = [
 												count--;
 
 												if(count <= 0) { // "callback"
-													res.json(moments);
+													result.moments = moments;
+													res.json(result);
 												}
 											});
 										} else if(moment.elementType === 'VideoFrame') {
@@ -125,7 +133,8 @@ exports.read = [
 												count--;
 
 												if(count <= 0) { // "callback"
-													res.json(moments);
+													result.moments = moments;
+													res.json(result);
 												}
 											});
 										} else {
@@ -133,14 +142,16 @@ exports.read = [
 
 											if(count <= 0) {
 												// "callback"
-												res.json(moments);
+												result.moments = moments;
+													res.json(result);
 											}
 										}
 									} else {
 										count--;
 										if(count <= 0) {
 											// "callback"
-											res.json(moments);
+											result.moments = moments;
+													res.json(result);
 										}
 									}
 								});

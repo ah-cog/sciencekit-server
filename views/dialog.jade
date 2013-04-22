@@ -1,16 +1,24 @@
 extends layout
 
 block content
-	h1 authorize client
+	div
+		img(src="../images/sciencekit-logo.png", alt="sciencekit logo")
 
-	p
-		strong #{ myclient.name } 
-		| is requesting access to your account resources.
+	p(class='auth')
+		| <strong> #{ myclient.name }</strong> is requesting access to your account.
 
-	p Do you approve?
+	p(class='auth')
+		| What do you say?
 
 	form(action="/dialog/authorize/decision", method="post")
 		input(name="transaction_id", type="hidden", value="#{ transactionID }")
 		div
-			input(type="submit", value="Allow", id="allow")
-			input(type="submit", vlaue="Deny", id="deny")
+			button(type="submit", value="Allow", id="allow", style="border: 0px; padding: 0px;")
+				span(class="auth")
+					| allow
+			//input(type="submit", value="Allow", id="allow", style="padding: 14px;")
+
+			button(type="submit", value="Deny", id="deny", style="border: 0px; padding: 0px;")
+				span(class="auth")
+					| deny
+			//input(type="submit", value="Deny", id="deny")

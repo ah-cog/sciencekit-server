@@ -7,7 +7,7 @@ var thoughtFrameSchema = new mongoose.Schema({
 	timeline: { type: mongoose.Schema.Types.ObjectId, ref: 'Timeline' }, // Timeline on which this event occurred.  (NOT! the following) Timeline for which this element is the head
 
 	first: { type: mongoose.Schema.Types.ObjectId, ref: 'Thought' }, // first thought, the root, seed thought
-	latest: { type: mongoose.Schema.Types.ObjectId, ref: 'Thought' }, // most recent thought temporally
+	last: { type: mongoose.Schema.Types.ObjectId, ref: 'Thought' }, // most recent thought temporally
 
 	date: { type: Date, default: Date.now },
 	hidden: Boolean
@@ -16,7 +16,7 @@ var thoughtFrameSchema = new mongoose.Schema({
 thoughtFrameSchema.statics.getPopulated = function(thoughtFrame, fn) {
 
 	this.findById(thoughtFrame.id, function(err, thoughtFrame) {
-		thoughtFrame.populate({ path: 'latest', model: 'Thought' }, function(err, populatedThoughtFrame) {
+		thoughtFrame.populate({ path: 'last', model: 'Thought' }, function(err, populatedThoughtFrame) {
 			populatedThoughtFrame.populate({ path: 'author' }, function(err, populatedAuthor) {
 				fn(err, thoughtFrame);
 			});
@@ -26,7 +26,7 @@ thoughtFrameSchema.statics.getPopulated = function(thoughtFrame, fn) {
 
 thoughtFrameSchema.statics.getPopulated2 = function(thoughtFrame, fn) {
 
-	thoughtFrame.populate({ path: 'latest', model: 'Thought' }, function(err, populatedThoughtFrame) {
+	thoughtFrame.populate({ path: 'last', model: 'Thought' }, function(err, populatedThoughtFrame) {
 		populatedThoughtFrame.populate({ path: 'author' }, function(err, populatedAuthor) {
 			fn(err, populatedThoughtFrame);
 		});

@@ -126,8 +126,8 @@ exports.getOrCreateMoment = function(frame, fn) {
 exports.createMomentTimeline = function(moment, fn) {
 
   // Get Activity associated with Moment
-  var activity = moment.element;
-  var activityType = moment.elementType;
+  var activity = moment.activity;
+  var activityType = moment.activityType;
 
   // Create Timeline for Moment (always create a new Timeline when creating a new Moment)
   //
@@ -197,7 +197,7 @@ exports.addThought = function(thoughtTemplate, fn) {
 
             // Create Moment on Timeline
             console.log(moment);
-            moment.populate({ path: 'element', model: moment.elementType }, function(err, populatedElement) {
+            moment.populate({ path: 'element', model: moment.activityType }, function(err, populatedElement) {
               if(moment.elementType === 'ThoughtFrame') {
                 ThoughtFrame.getPopulated2(populatedElement.element, function(err, populatedThoughtFrame) {
                   fn(err, moment);
@@ -227,7 +227,7 @@ exports.createThought = function(thoughtFrame, thoughtTemplate, fn) {
     console.log('Created Thought: ' + thought);
 
     // Update latest thought
-    thoughtFrame.latest = thought;
+    thoughtFrame.last = thought;
     if(thoughtFrame.first == null) { // For new Thoughts, set the first Thought.
       thoughtFrame.first = thought;
     }
@@ -381,7 +381,7 @@ exports.createPhoto = function(photoFrame, photoTemplate, fn) {
       console.log('Created Photo: ' + photo);
 
       // Update latest Photo in PhotoFrame
-      photoFrame.latest = photo;
+      photoFrame.last = photo;
       if(photoFrame.first == null) { // For new Thoughts, set the first Thought.
         photoFrame.first = photo;
       }

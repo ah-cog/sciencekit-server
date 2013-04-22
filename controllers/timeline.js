@@ -5,6 +5,7 @@ var passport = require('passport')
 	, Account = require('../models/account.js')
 	, Timeline = require('../models/timeline')
 	, Moment = require('../models/moment')
+	, FrameView = require('../models/frame-view')
 	, ThoughtFrame = require('../models/thought-frame')
 	, TopicFrame = require('../models/topic-frame')
 	, PhotoFrame = require('../models/photo-frame')
@@ -29,16 +30,16 @@ exports.read = [
 		} else {
 			console.log("Lookup up timeline for account: " + req.user.id);
 			// Lookup timeline for user
-			Moment.findOne({ element: req.user.id, elementType: 'Account' }, function(err, moment) {
+			Moment.findOne({ frame: req.user.id, frameType: 'Account' }, function(err, moment) {
 
 				// Create timeline for account if one doesn't exist
 				if (moment === null) {
 
 					// Create timeline for account
-					Story.createTimelineByElement(req.user, function(err, timeline) {
+					Story.createTimelineByActivity(req.user, function(err, timeline) {
 
-						Moment.findOne({ element: req.user.id, elementType: 'Account' }, function(err, moment) {
-							console.log('Found timeline element:' + moment.id);
+						Moment.findOne({ frame: req.user.id, frameType: 'Account' }, function(err, moment) {
+							console.log('Found timeline frame:' + moment.id);
 							conditions['moment'] = moment.id;
 
 							getTimeline();
@@ -55,6 +56,9 @@ exports.read = [
 			});
 		}
 
+		//
+		// Construct Timeline JSON object to return to client
+		//
 		function getTimeline() {
 			console.log("Timeline.find() conditions:");
 			console.log(conditions);
@@ -80,22 +84,36 @@ exports.read = [
 						if (moments !== null && moments.length > 0) {
 
 							// Populate the timeline
-							var count = moments.length; // Hacky. Optimize!
+							var count = moments.length; // Hacky solution used to force synchronous operation. Optimize!
 							moments.forEach(function (moment) {
 
-								//console.log(element);
+								// Populate the Moment on the Timeline
+								moment.populate({ path: 'frame', model: moment.frameType }, function(err, populatedMoment) {
+									if (populatedMoment !== null && populatedMoment.frame !== null) {
 
-								// Populate the moments in the timeline
-								// console.log('%s is a %s', element.element, element.elementType);
-								moment.populate({ path: 'element', model: moment.elementType }, function(err, populatedElement) {
-									if (populatedElement !== null && populatedElement.element !== null) {
+										if (moment.frameType.indexOf('Frame') !== -1) {
 
-										// console.log("==> popped: " + populatedElement);
+										//
+										// Get FrameView for current Account (or create one if none exists)
+										//
 
-										// Populate JSON structure to return based on element types
+										console.log("Creating FrameView for Frame: ");
+										console.log(populatedMoment.frame);
 
-										if(moment.elementType === 'ThoughtFrame') {
-											ThoughtFrame.getPopulated2(populatedElement.element, function(err, populatedThoughtFrame) {
+										Story.getOrCreateFrameView(populatedMoment.frame, req.user, function (err, frameView) {
+											console.log('Created FrameView: ');
+											console.log(frameView);
+
+											//
+											// Populate JSON structure to return based on element types
+											//
+
+											FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
+
+												if (populatedFrameView !== null) {
+													// Replace the generic Frame (e.g., ThoughtFrame) with FrameView associated with the generic Frame for the current Account
+													moment.frame = populatedFrameView;
+												}
 
 												count--;
 
@@ -103,56 +121,78 @@ exports.read = [
 													result.moments = moments;
 													res.json(result);
 												}
-											});
-											
-										} else if(moment.elementType === 'TopicFrame') {
-											TopicFrame.getPopulated2(populatedElement.element, function(err, populatedTopicFrame) {
+											});											
+										});
 
-												count--;
-
-												if(count <= 0) { // "callback"
-													result.moments = moments;
-													res.json(result);
-												}
-											});
-											
-										} else if(moment.elementType === 'PhotoFrame') {
-											console.log(" POPULATING PHOTO FRAME");
-											moment.element.populate({ path: 'latest', model: 'Photo' }, function(err, populatedPhoto) {
-												//console.log(populatedThoughtFrame);
-												count--;
-
-												if(count <= 0) { // "callback"
-													result.moments = moments;
-													res.json(result);
-												}
-											});
-										} else if(moment.elementType === 'VideoFrame') {
-											console.log("POPULATING VIDEO FRAME");
-											moment.element.populate({ path: 'last', model: 'Video' }, function(err, populatedPhoto) {
-												count--;
-
-												if(count <= 0) { // "callback"
-													result.moments = moments;
-													res.json(result);
-												}
-											});
 										} else {
 											count--;
-
 											if(count <= 0) {
 												// "callback"
 												result.moments = moments;
-													res.json(result);
+												res.json(result);
 											}
 										}
-									} else {
-										count--;
-										if(count <= 0) {
-											// "callback"
-											result.moments = moments;
-													res.json(result);
-										}
+
+									// 	if(moment.elementType === 'ThoughtFrame') {
+
+									// 		// ThoughtFrame.getPopulated2(populatedMoment.element, function(err, populatedThoughtFrame) {
+
+									// 		// 	count--;
+
+									// 		// 	if(count <= 0) { // "callback"
+									// 		// 		result.moments = moments;
+									// 		// 		res.json(result);
+									// 		// 	}
+									// 		// });
+											
+									// 	} else if(moment.elementType === 'TopicFrame') {
+									// 		TopicFrame.getPopulated2(populatedMoment.element, function(err, populatedTopicFrame) {
+
+									// 			count--;
+
+									// 			if(count <= 0) { // "callback"
+									// 				result.moments = moments;
+									// 				res.json(result);
+									// 			}
+									// 		});
+											
+									// 	} else if(moment.elementType === 'PhotoFrame') {
+									// 		console.log(" POPULATING PHOTO FRAME");
+									// 		moment.element.populate({ path: 'last', model: 'Photo' }, function(err, populatedPhoto) {
+									// 			//console.log(populatedThoughtFrame);
+									// 			count--;
+
+									// 			if(count <= 0) { // "callback"
+									// 				result.moments = moments;
+									// 				res.json(result);
+									// 			}
+									// 		});
+									// 	} else if(moment.elementType === 'VideoFrame') {
+									// 		console.log("POPULATING VIDEO FRAME");
+									// 		moment.element.populate({ path: 'last', model: 'Video' }, function(err, populatedPhoto) {
+									// 			count--;
+
+									// 			if(count <= 0) { // "callback"
+									// 				result.moments = moments;
+									// 				res.json(result);
+									// 			}
+									// 		});
+									// 	} else {
+									// 		count--;
+
+									// 		if(count <= 0) {
+									// 			// "callback"
+									// 			result.moments = moments;
+									// 				res.json(result);
+									// 		}
+									// 	}
+									// } else {
+									// 	count--;
+									// 	if(count <= 0) {
+									// 		// "callback"
+									// 		result.moments = moments;
+									// 				res.json(result);
+									// 	}
 									}
 								});
 
@@ -180,7 +220,7 @@ exports.create = [
 		// Create timeline
 		Timeline.create({
 			moment: timelineTemplate.moment,
-			elementType: timelineTemplate.elementType
+			frameType: timelineTemplate.activityType
 		}, function(err, timeline) {
 			console.log('Creating timeline: ' + timeline);
 			if (err) {

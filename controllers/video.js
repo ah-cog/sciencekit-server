@@ -33,7 +33,7 @@ exports.create = [
             activityTemplate.uri      = req.files.file.path.substring(filenameStart);
             activityTemplate.timeline = timeline;
             activityTemplate.account  = account;
-            if (data.hasOwnProperty('element'))   activityTemplate.element   = data.element;
+            if (data.hasOwnProperty('activity'))   activityTemplate.activity   = data.activity;
             if (data.hasOwnProperty('reference')) activityTemplate.reference = data.reference;
 
             console.log("videoUri = " + activityTemplate.uri);

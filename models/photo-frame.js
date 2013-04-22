@@ -5,7 +5,7 @@ var photoFrameSchema = new mongoose.Schema({
 	timeline: { type: mongoose.Schema.Types.ObjectId, ref: 'Timeline' }, // Timeline on which this event occurred.  (NOT! the following) Timeline for which this element is the head
 	
 	first: { type: mongoose.Schema.Types.ObjectId, ref: 'Photo' }, // first photo, the root, seed photo
-	latest: { type: mongoose.Schema.Types.ObjectId, ref: 'Photo' }, // most recent photo temporally
+	last: { type: mongoose.Schema.Types.ObjectId, ref: 'Photo' }, // most recent photo temporally
 
 	date: { type: Date, default: Date.now },
 	hidden: Boolean
@@ -14,7 +14,7 @@ var photoFrameSchema = new mongoose.Schema({
 photoFrameSchema.statics.getPopulated = function(frame, fn) {
 
 	this.findById(frame.id, function(err, frame) {
-		frame.populate({ path: 'latest', model: 'Photo' }, function(err, populatedFrame) {
+		frame.populate({ path: 'last', model: 'Photo' }, function(err, populatedFrame) {
 			populatedFrame.populate({ path: 'author' }, function(err, populatedAuthor) {
 				fn(err, frame);
 			});
@@ -24,7 +24,7 @@ photoFrameSchema.statics.getPopulated = function(frame, fn) {
 
 photoFrameSchema.statics.getPopulated2 = function(frame, fn) {
 
-	frame.populate({ path: 'latest', model: 'Photo' }, function(err, populatedFrame) {
+	frame.populate({ path: 'last', model: 'Photo' }, function(err, populatedFrame) {
 		populatedFrame.populate({ path: 'author' }, function(err, populatedAuthor) {
 			fn(err, populatedFrame);
 		});

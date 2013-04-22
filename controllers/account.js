@@ -57,7 +57,7 @@ exports.create = function(req, res) {
 					}, function(err, client) {
 
 						// Create timeline for account
-						Story.createTimelineByElement(account, function(err, timeline) {
+						Story.createTimelineByActivity(account, function(err, timeline) {
 							if (err) {
 								console.log('Error creating timeline for new account:' + account);
 							}

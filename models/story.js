@@ -1,6 +1,7 @@
 var mongoose = require('mongoose')
 	, Timeline = require('./timeline')
 	, Moment = require('./moment')
+	, FrameView = require('./frame-view')
 	, ThoughtFrame = require('./thought-frame')
 	, Thought = require('./thought')
 	, PhotoFrame = require('./photo-frame')
@@ -36,7 +37,7 @@ storySchema.statics.getTimelineById = function(timelineId, fn) {
 }
 
 // Create Timeline for associated Activity.
-storySchema.statics.createTimelineByElement = function(activity, fn) {
+storySchema.statics.createTimelineByActivity = function(activity, fn) {
 
 	// Get Activity type (i.e., the particular Activity model's name)
 	var activityType = activity.constructor.modelName;
@@ -53,8 +54,8 @@ storySchema.statics.createTimelineByElement = function(activity, fn) {
 		// Create Moment
 		var moment = new Moment({
 			timeline: timeline,
-			element: activity,
-			elementType: activityType
+			frame: activity,
+			frameType: activityType
 		});
 
 		moment.save(function (err) {
@@ -93,43 +94,39 @@ storySchema.statics.getOrCreateMoment = function(frame, fn) {
 	console.log("Frame:");
 	console.log(frame);
 
-  Moment.findOne({ element: frame, timeline: frame.timeline }, function(err, existingMoment) {
-    if(err) throw err;
+	Moment.findOne({ frame: frame, timeline: frame.timeline }, function(err, existingMoment) {
+		if(err) throw err;
 
-    // Check if a frame exists with the specified ID.  If not, create a new frame.
-    if(existingMoment !== null) {
-      console.log("Found existing Moment: " + existingMoment);
+		// Check if a frame exists with the specified ID.  If not, create a new frame.
+		if(existingMoment !== null) {
+			console.log("Found existing Moment: " + existingMoment);
 
-      // Create timeline element
-      fn(null, existingMoment);
+			fn(null, existingMoment);
+		} else {
 
-    } else {
+			// Timeline Moment doesn't exist.  Create new timeline element.
+			var frameType = frame.constructor.modelName;
 
-      // Timeline element doesn't exist.  Create new timeline element.
+			// Save a new timeline element to datastore
+			var moment = new Moment({
+				timeline: frame.timeline,
+				frameType: frameType,
+				frame: frame
+			});
+			console.log('Saving Moment: ' + moment);
+			moment.save(function(err) {
+				// if(err) throw err;
+				if (err) { console.log('Error creating Moment: ' + moment); }
+				console.log('Created Moment: ' + moment);
 
-      var elementType = frame.constructor.modelName;
-
-      // Save a new timeline element to datastore
-      var moment = new Moment({
-        timeline: frame.timeline,
-        elementType: elementType,
-        element: frame
-      });
-      console.log('Saving Moment: ' + moment);
-      moment.save(function(err) {
-        // if(err) throw err;
-        if (err) { console.log('Error creating Moment: ' + moment); }
-        console.log('Created Moment: ' + moment);
-
-        // Create Timeline for Moment
-        Story.createMomentTimeline(moment, function(err, momentTimeline) {
-
-	        // Callback
-	        fn(null, moment);
-	    });
-      });
-    }
-  });
+				// Create Timeline for Moment
+				Story.createMomentTimeline(moment, function(err, momentTimeline) {
+					// Callback
+					fn(null, moment);
+				});
+			});
+		}
+	});
 }
 
 // Create a new Timeline and a new Moment on that new Timeline for specified 
@@ -138,8 +135,8 @@ storySchema.statics.getOrCreateMoment = function(frame, fn) {
 storySchema.statics.createMomentTimeline = function(moment, fn) {
 
 	// Get Activity associated with Moment
-	var activity = moment.element;
-	var activityType = moment.elementType;
+	var frame = moment.frame;
+	var frameType = moment.frameType;
 
 	// Create Timeline for Moment (always create a new Timeline when creating a new Moment)
 	//
@@ -160,8 +157,8 @@ storySchema.statics.createMomentTimeline = function(moment, fn) {
 		// Save a new Moment to datastore
   		var moment = new Moment({
   			timeline: timeline,
-  			elementType: activityType,
-  			element: activity
+  			frameType: frameType,
+  			frame: frame
   		});
 
   		console.log('Saving moment: ' + moment);
@@ -171,8 +168,73 @@ storySchema.statics.createMomentTimeline = function(moment, fn) {
   			console.log('Created moment: ' + moment);
 
 			// Callback
-			fn(null, activity);
+			fn(null, frame);
   		});
+	});
+}
+
+
+
+
+// FrameView
+
+// Create FrameView for specified Timeline.
+// Creating a FrameView for an existing Timeline also creates a new Timeline for 
+// which the created FrameView is the "source" FrameView.  Therefore every FrameView is 
+// the source of a Timeline.
+storySchema.statics.getOrCreateFrameView = function(frame, account, fn) {
+
+	var Story = this;
+
+	console.log("Frame:");
+	console.log(frame);
+
+	FrameView.findOne({
+		frame: frame,
+		account: account
+
+	}, function(err, existingFrame) {
+		if(err) throw err;
+
+		// Check if a FrameView exists.  If not, create a new one.
+		if(existingFrame !== null) {
+			console.log("Found existing FrameView: " + existingFrame);
+			fn(null, existingFrame);
+
+		} else {
+
+			// Frame element doesn't exist, so create one.
+			var frameType = frame.constructor.modelName;
+
+			// Get Activity for Frame
+			//var activityType = frame.last.constructor.modelName; // TODO: Check if frame.last exists and only do this if it does exist
+			var activityType = null;
+			var i = 0;
+			var j = frameType.indexOf('Frame');
+			if (j !== -1) {
+				activityType = frameType.substr(i, j);
+				console.log('activityType = ' + activityType);
+			}
+
+			// Save a new timeline element to datastore
+			var frameView = new FrameView({
+				frame: frame,
+				frameType: frameType,
+
+				// TODO: Check if frame.last exists and only do this if it does exist
+				activity: frame.last,
+				activityType: activityType,
+
+				account: account
+			});
+
+			console.log('Saving FrameView: ' + frameView);
+			frameView.save(function(err) {
+				if(err) throw err;
+
+				fn(null, frameView);
+			});
+		}
 	});
 }
 
@@ -209,9 +271,9 @@ storySchema.statics.addThought = function(thoughtTemplate, fn) {
 
       			// Create Moment on Timeline
       			console.log(moment);
-      			moment.populate({ path: 'element', model: moment.elementType }, function(err, populatedElement) {
-      				if(moment.elementType === 'ThoughtFrame') {
-      					ThoughtFrame.getPopulated2(populatedElement.element, function(err, populatedThoughtFrame) {
+      			moment.populate({ path: 'frame', model: moment.frameType }, function(err, populatedMoment) {
+      				if(moment.frameType === 'ThoughtFrame') {
+      					ThoughtFrame.getPopulated2(populatedMoment.frame, function(err, populatedThoughtFrame) {
       						fn(err, moment);
       					});
       				}
@@ -239,7 +301,7 @@ storySchema.statics.createThought = function(thoughtFrame, thoughtTemplate, fn) 
 		console.log('Created Thought: ' + thought);
 
 		// Update latest thought
-		thoughtFrame.latest = thought;
+		thoughtFrame.last = thought;
 		if(thoughtFrame.first == null) { // For new Thoughts, set the first Thought.
 			thoughtFrame.first = thought;
 		}
@@ -261,7 +323,7 @@ storySchema.statics.createThought = function(thoughtFrame, thoughtTemplate, fn) 
 // - Creates Moment for new ThoughtFrame and new Timeline
 storySchema.statics.getThoughtFrame = function(thoughtTemplate, fn) {
  
-	ThoughtFrame.findById(thoughtTemplate.element, function(err, existingThoughtFrame) {
+	ThoughtFrame.findById(thoughtTemplate.frame, function(err, existingThoughtFrame) {
 		if(err) throw err;
 
 		// Check if a thought exists with the specified ID.  If not, create a new thought.
@@ -324,9 +386,9 @@ storySchema.statics.addPhoto = function(photoTemplate, fn) {
 
       			// Create Moment on Timeline
       			console.log(moment);
-      			moment.populate({ path: 'element', model: moment.elementType }, function (err, populatedElement) {
-      				if(moment.elementType === 'PhotoFrame') {
-      					PhotoFrame.getPopulated2(populatedElement.element, function (err, populatedPhotoFrame) {
+      			moment.populate({ path: 'frame', model: moment.frameType }, function (err, populatedMoment) {
+      				if(moment.frameType === 'PhotoFrame') {
+      					PhotoFrame.getPopulated2(populatedMoment.frame, function (err, populatedPhotoFrame) {
       						fn(err, moment);
       					});
       				}
@@ -339,7 +401,7 @@ storySchema.statics.addPhoto = function(photoTemplate, fn) {
 storySchema.statics.getOrCreatePhotoFrame = function(photoTemplate, fn) {
 	console.log("getPhotoFrame");
 
-	PhotoFrame.findById(photoTemplate.element, function(err, existingPhoto) {
+	PhotoFrame.findById(photoTemplate.frame, function(err, existingPhoto) {
 		if(err) throw err;
 
 		// Check if a photo exists with the specified ID.  If not, create a new photo.
@@ -394,7 +456,7 @@ storySchema.statics.createPhoto = function(photoFrame, photoTemplate, fn) {
 			console.log('Created Photo: ' + photo);
 
 			// Update latest Photo in PhotoFrame
-			photoFrame.latest = photo;
+			photoFrame.last = photo;
 			if(photoFrame.first == null) { // For new Thoughts, set the first Thought.
 				photoFrame.first = photo;
 			}
@@ -444,9 +506,9 @@ storySchema.statics.addVideo = function(videoTemplate, fn) {
 
       			// Create Moment on Timeline
       			console.log(moment);
-      			moment.populate({ path: 'element', model: moment.elementType }, function (err, populatedElement) {
-      				if(moment.elementType === 'VideoFrame') {
-      					VideoFrame.getPopulated2(populatedElement.element, function (err, populatedVideoFrame) {
+      			moment.populate({ path: 'frame', model: moment.frameType }, function (err, populatedMoment) {
+      				if(moment.frameType === 'VideoFrame') {
+      					VideoFrame.getPopulated2(populatedMoment.frame, function (err, populatedVideoFrame) {
       						fn(err, moment);
       					});
       				}
@@ -463,7 +525,7 @@ storySchema.statics.getOrCreateVideoFrame = function(videoTemplate, fn) {
 	var FrameModel = VideoFrame;
 
 	// Get frame
-	FrameModel.findById(videoTemplate.element, function(err, existingFrame) {
+	FrameModel.findById(videoTemplate.frame, function(err, existingFrame) {
 		if(err) throw err;
 
 		// Check if a photo exists with the specified ID.  If not, create a new photo.
@@ -567,9 +629,9 @@ storySchema.statics.addTopic = function(topicTemplate, fn) {
 
       			// Create Moment on Timeline
       			console.log(moment);
-      			moment.populate({ path: 'element', model: moment.elementType }, function(err, populatedElement) {
-      				if(moment.elementType === 'TopicFrame') {
-      					TopicFrame.getPopulated2(populatedElement.element, function(err, populatedTopicFrame) {
+      			moment.populate({ path: 'frame', model: moment.frameType }, function(err, populatedMoment) {
+      				if(moment.frameType === 'TopicFrame') {
+      					TopicFrame.getPopulated2(populatedMoment.frame, function(err, populatedTopicFrame) {
       						fn(err, moment);
       					});
       				}
@@ -619,7 +681,7 @@ storySchema.statics.createTopic = function(topicFrame, topicTemplate, fn) {
 // - Creates Moment for new TopicFrame and new Timeline
 storySchema.statics.getTopicFrame = function(topicTemplate, fn) {
  
-	TopicFrame.findById(topicTemplate.element, function(err, existingFrame) {
+	TopicFrame.findById(topicTemplate.frame, function(err, existingFrame) {
 		if(err) throw err;
 
 		// Check if a Topic exists with the specified ID.  If not, create a new Topic.

@@ -261,7 +261,9 @@ app.post('/api/account/avatar',   controllers.Avatar.create);
 app.get('/api/account/avatar',   controllers.Avatar.read);
 
 app.get('/api/timeline',  controllers.timeline.read);
+app.get('/api/thought',  controllers.thought.read);
 app.post('/api/thought',  controllers.thought.create);
+app.put('/api/thought',  controllers.thought.update);
 app.post('/api/topic',  controllers.Topic.create);
 
 app.get('/api/photo',     controllers.PhotoFrame.list);

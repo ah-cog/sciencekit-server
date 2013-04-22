@@ -105,6 +105,19 @@ exports.read = [
 											console.log(frameView);
 
 											//
+											// Update inactive FrameView
+											//
+
+											if (frameView.active === false) {
+												frameView.activity = moment.frame.last;
+												frameView.save(function(err) {
+													if (err) throw err;
+
+													// TODO: Make this "synchronous"?  So the Frame that is retreived is always the latest?
+												});
+											}
+
+											//
 											// Populate JSON structure to return based on element types
 											//
 

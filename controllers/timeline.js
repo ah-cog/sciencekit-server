@@ -27,6 +27,23 @@ exports.read = [
 			conditions['moment'] = req.query['moment_id'];
 
 			getTimeline();
+		} else if (req.query['frameId']) {
+
+			Moment.findOne({ frame: req.query['frameId'] }, function(err, moment) {
+
+				// Create timeline for account if one doesn't exist
+				if (moment === null) {
+
+					// TODO: Handle this case.  Should happen, but it might in weird situations!
+
+				} else {
+
+					console.log('Found Moment:' + moment.id);
+					conditions['moment'] = moment.id;
+
+					getTimeline();
+				}
+			});
 		} else {
 			console.log("Lookup up timeline for account: " + req.user.id);
 			// Lookup timeline for user
@@ -108,14 +125,14 @@ exports.read = [
 											// Update inactive FrameView
 											//
 
-											if (frameView.active === false) {
+											//if (frameView.active === true) {
 												frameView.activity = moment.frame.last;
 												frameView.save(function(err) {
 													if (err) throw err;
 
 													// TODO: Make this "synchronous"?  So the Frame that is retreived is always the latest?
 												});
-											}
+											//}
 
 											//
 											// Populate JSON structure to return based on element types

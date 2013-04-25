@@ -6,4 +6,5 @@ exports.PhotoFrame = require('./photo-frame');
 exports.Photo = require('./photo');
 exports.Avatar = require('./avatar');
 exports.Topic = require('./topic');
+exports.Tag = require('./tag');
 exports.Video = require('./video');

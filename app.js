@@ -261,10 +261,16 @@ app.post('/api/account/avatar',   controllers.Avatar.create);
 app.get('/api/account/avatar',   controllers.Avatar.read);
 
 app.get('/api/timeline',  controllers.timeline.read);
+
 app.get('/api/thought',  controllers.thought.read);
 app.post('/api/thought',  controllers.thought.create);
 app.put('/api/thought',  controllers.thought.update);
-app.post('/api/topic',  controllers.Topic.create);
+
+app.post('/api/:activityType/tag',  controllers.Tag.create);
+app.get('/api/tag',  controllers.Tag.read);
+
+app.post('/api/topic', controllers.Topic.create);
+app.put('/api/topic', controllers.Topic.update);
 
 app.get('/api/photo',     controllers.PhotoFrame.list);
 app.post('/api/photo',    controllers.Photo.create);

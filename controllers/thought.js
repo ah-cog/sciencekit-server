@@ -28,12 +28,36 @@ exports.create = [
             // TODO: Verify required fields for element are present
 
             Story.addThought(thoughtTemplate, function(err, moment) {
-                io.sockets.emit('thought', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
-                res.json(moment);
+                Story.getOrCreateFrameView(moment.frame, req.user, function (err, frameView) {
+                    console.log('Created FrameView: ');
+                    console.log(frameView);
+
+                    //
+                    // Populate JSON structure to return based on element types
+                    //
+
+                    FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
+
+                        frameView.activity = moment.frame.last;
+                        frameView.save(function(err) {
+                            if (err) throw err;
+
+                            if (populatedFrameView !== null) {
+                                // Replace the generic Frame (e.g., ThoughtFrame) with FrameView associated with the generic Frame for the current Account
+                                moment.frame = populatedFrameView;
+                            }
+
+                            io.sockets.emit('thought', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
+                            res.json(moment);
+                        });
+
+                        
+                    });
+                });
             });
         });
     }
-]
+];
 
 exports.update = [
     passport.authenticate('bearer', { session: false }),
@@ -62,17 +86,21 @@ exports.update = [
                     frameView.visible = thoughtTemplate.visible;
                 }
 
+                if (thoughtTemplate.hasOwnProperty('activity')) {
+                    frameView.activity = thoughtTemplate.activity;
+                }
+
                 frameView.save(function(err) {
                     if(err) throw err;
 
-                    //io.sockets.emit('thought', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
+                    io.sockets.emit('thought', frameView); // TODO: is this the wrong place?  better place?  guaranteed here?
                     //res.json(moment);
-                    res.json({});
+                    res.json(frameView);
                 });
             });
         });
     }
-]
+];
 
 exports.read = [
     passport.authenticate('bearer', { session: false }),

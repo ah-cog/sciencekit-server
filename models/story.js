@@ -36,13 +36,15 @@ storySchema.statics.getTimelineById = function(timelineId, fn) {
 	});
 }
 
-// Create Timeline for associated Activity.
+// Create Timeline for associated Activity.  Create parent Moment for Timeline associated with specified Activity.
 storySchema.statics.createTimelineByActivity = function(activity, fn) {
 
 	// Get Activity type (i.e., the particular Activity model's name)
 	var activityType = activity.constructor.modelName;
 
-	// Create timeline
+	//
+	// Create Timeline
+	//
 	var timeline = new Timeline();
 	timeline.save(function(err) {
 
@@ -51,7 +53,9 @@ storySchema.statics.createTimelineByActivity = function(activity, fn) {
 		if (err) console.log('Error creating Timeline for Activity: ' + activity);
 		console.log('Created Timeline for Activity: ' + activity);
 
-		// Create Moment
+		//
+		// Create the parent Moment for the Timeline.
+		//
 		var moment = new Moment({
 			timeline: timeline,
 			frame: activity,

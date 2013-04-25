@@ -6,6 +6,7 @@ var passport = require('passport')
   , VideoFrame = require('../models/video-frame')
   , Video = require('../models/video')
   , Moment = require('../models/moment')
+  , FrameView = require('../models/frame-view')
   , Story = require('../models/story');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
@@ -40,8 +41,35 @@ exports.create = [
             console.log(activityTemplate);
 
             Story.addVideo(activityTemplate, function(err, moment) {
-                io.sockets.emit('video', moment);
-                res.json(moment);
+                // io.sockets.emit('video', moment);
+                // res.json(moment);
+
+                Story.getOrCreateFrameView(moment.frame, req.user, function (err, frameView) {
+                    console.log('Created FrameView: ');
+                    console.log(frameView);
+
+                    //
+                    // Populate JSON structure to return based on element types
+                    //
+
+                    FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
+
+                        frameView.activity = moment.frame.last;
+                        frameView.save(function(err) {
+                            if (err) throw err;
+
+                            if (populatedFrameView !== null) {
+                                // Replace the generic Frame (e.g., ThoughtFrame) with FrameView associated with the generic Frame for the current Account
+                                moment.frame = populatedFrameView;
+                            }
+
+                            io.sockets.emit('video', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
+                            res.json(moment);
+                        });
+
+                        
+                    });
+                });
             });
 
         });

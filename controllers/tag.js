@@ -24,7 +24,23 @@ exports.read = [
             Tag.find({ frame: frameId }, function (err, tags) {
                 if (err) throw err;
 
-                res.json(tags);
+                var tagCount = tags.length;
+
+                var result = [];
+                tags.forEach(function (tag) {
+
+                    getTagTimeline(tag.text, function(err, timeline) {
+                        var tagResult = {};
+                        tagResult.timeline = timeline;
+                        tagResult.tag = tag;
+                        result.push(tagResult);
+                        tagCount--;
+                        if(tagCount <= 0) {
+                            res.json(result);
+                        }
+                    });
+                });
+                
             });
         }
     }
@@ -127,8 +143,8 @@ exports.create = [
                                             console.log("timeline = " + timeline);
 
                                             //res.json(activityType + ', ' + template);
+                                            io.sockets.emit('tag', { timeline: timeline, tag: tag }); // TODO: is this the wrong place?  better place?  guaranteed here?
                                             res.json(timeline);
-                                            //io.sockets.emit('tag', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
                                         });
 
                                     }
@@ -148,6 +164,7 @@ exports.create = [
                     console.log('Tag already exists!');
 
                     getTagTimeline(template.text, function(err, timeline) {
+                        io.sockets.emit('tag', { timeline: timeline, tag: tag });
                         res.json(timeline);
                     });
                 }

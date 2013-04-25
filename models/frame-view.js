@@ -39,7 +39,7 @@ frameViewSchema.statics.getPopulated2 = function(frameView, fn) {
 
     if (frameView.frameType.indexOf('Frame') !== -1) {
         frameView.populate({ path: 'activity', model: frameView.activityType }, function(err, populatedFrameView) {
-            populatedFrameView.populate({ path: 'account' }, function(err, populatedAuthor) {
+            populatedFrameView.activity.populate({ path: 'author' }, function(err, populatedAuthor) {
                 fn(err, populatedFrameView);
             });
         });

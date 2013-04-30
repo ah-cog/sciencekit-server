@@ -33,15 +33,22 @@ exports.create = [
                     console.log(frameView);
 
                     //
-                    // Populate JSON structure to return based on element types
+                    // Update Activity
                     //
+                    frameView.activity = moment.frame.last;
 
-                    FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
+                    //
+                    // Save updated Activity
+                    //
+                    frameView.save(function(err) {
+                        if (err) throw err;
 
-                        frameView.activity = moment.frame.last;
-                        frameView.save(function(err) {
-                            if (err) throw err;
+                        //
+                        // Populate JSON structure to return based on element types
+                        //
 
+                        FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
+                            
                             if (populatedFrameView !== null) {
                                 // Replace the generic Frame (e.g., ThoughtFrame) with FrameView associated with the generic Frame for the current Account
                                 moment.frame = populatedFrameView;

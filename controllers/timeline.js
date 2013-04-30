@@ -90,6 +90,8 @@ exports.read = [
 						return res.json({});
 					}
 
+					// Check if the Timeline's parent Moment is associated with a Tag.  If so, get all Moments associated with the given Tag.
+
 					// Response
 					var result = {};
 					result._id = timeline._id;
@@ -114,12 +116,7 @@ exports.read = [
 										// Get FrameView for current Account (or create one if none exists)
 										//
 
-										console.log("Creating FrameView for Frame: ");
-										console.log(populatedMoment.frame);
-
 										Story.getOrCreateFrameView(populatedMoment.frame, req.user, function (err, frameView) {
-											console.log('Created FrameView: ');
-											console.log(frameView);
 
 											//
 											// Update inactive FrameView
@@ -147,7 +144,9 @@ exports.read = [
 
 												count--;
 
-												if(count <= 0) { // "callback"
+												if(count <= 0) {
+
+													// Return result
 													result.moments = moments;
 													res.json(result);
 												}
@@ -157,79 +156,16 @@ exports.read = [
 										} else {
 											count--;
 											if(count <= 0) {
-												// "callback"
+
+												// Return result
 												result.moments = moments;
 												res.json(result);
 											}
 										}
-
-									// 	if(moment.elementType === 'ThoughtFrame') {
-
-									// 		// ThoughtFrame.getPopulated2(populatedMoment.element, function(err, populatedThoughtFrame) {
-
-									// 		// 	count--;
-
-									// 		// 	if(count <= 0) { // "callback"
-									// 		// 		result.moments = moments;
-									// 		// 		res.json(result);
-									// 		// 	}
-									// 		// });
-											
-									// 	} else if(moment.elementType === 'TopicFrame') {
-									// 		TopicFrame.getPopulated2(populatedMoment.element, function(err, populatedTopicFrame) {
-
-									// 			count--;
-
-									// 			if(count <= 0) { // "callback"
-									// 				result.moments = moments;
-									// 				res.json(result);
-									// 			}
-									// 		});
-											
-									// 	} else if(moment.elementType === 'PhotoFrame') {
-									// 		console.log(" POPULATING PHOTO FRAME");
-									// 		moment.element.populate({ path: 'last', model: 'Photo' }, function(err, populatedPhoto) {
-									// 			//console.log(populatedThoughtFrame);
-									// 			count--;
-
-									// 			if(count <= 0) { // "callback"
-									// 				result.moments = moments;
-									// 				res.json(result);
-									// 			}
-									// 		});
-									// 	} else if(moment.elementType === 'VideoFrame') {
-									// 		console.log("POPULATING VIDEO FRAME");
-									// 		moment.element.populate({ path: 'last', model: 'Video' }, function(err, populatedPhoto) {
-									// 			count--;
-
-									// 			if(count <= 0) { // "callback"
-									// 				result.moments = moments;
-									// 				res.json(result);
-									// 			}
-									// 		});
-									// 	} else {
-									// 		count--;
-
-									// 		if(count <= 0) {
-									// 			// "callback"
-									// 			result.moments = moments;
-									// 				res.json(result);
-									// 		}
-									// 	}
-									// } else {
-									// 	count--;
-									// 	if(count <= 0) {
-									// 		// "callback"
-									// 		result.moments = moments;
-									// 				res.json(result);
-									// 	}
 									}
 								});
-
-
-
-
 							});
+
 						} else {
 							res.json({});
 						}

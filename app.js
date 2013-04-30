@@ -269,6 +269,9 @@ app.put('/api/thought',  controllers.thought.update);
 app.post('/api/:activityType/tag',  controllers.Tag.create);
 app.get('/api/tag',  controllers.Tag.read);
 
+// app.post('/api/bump',  controllers.Bump.create);
+// app.get('/api/bump',  controllers.Bump.read);
+
 app.post('/api/topic', controllers.Topic.create);
 app.put('/api/topic', controllers.Topic.update);
 

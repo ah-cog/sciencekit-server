@@ -3,7 +3,6 @@
 var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account')
-	, ThoughtFrame = require('../models/thought-frame')
 	, Thought = require('../models/thought')
     , FrameView = require('../models/frame-view')
 	, Story = require('../models/story');
@@ -28,6 +27,8 @@ exports.create = [
             // TODO: Verify required fields for element are present
 
             Story.addThought(thoughtTemplate, function(err, moment) {
+                console.log("MOMENT: ");
+                console.log(moment);
                 Story.getOrCreateFrameView(moment.frame, req.user, function (err, frameView) {
                     console.log('Created FrameView: ');
                     console.log(frameView);
@@ -48,7 +49,6 @@ exports.create = [
                         //
 
                         FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
-                            
                             if (populatedFrameView !== null) {
                                 // Replace the generic Frame (e.g., ThoughtFrame) with FrameView associated with the generic Frame for the current Account
                                 moment.frame = populatedFrameView;

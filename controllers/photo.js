@@ -3,9 +3,9 @@
 var passport = require('passport')
   , socketio = require('socket.io')
   , Account = require('../models/account')
-  , PhotoFrame = require('../models/photo-frame')
   , Photo = require('../models/photo')
   , Moment = require('../models/moment')
+  , Frame = require('../models/frame')
   , FrameView = require('../models/frame-view')
   , Story = require('../models/story');
 
@@ -48,18 +48,17 @@ exports.create = [
             console.log('Created FrameView: ');
             console.log(frameView);
 
-            //
-            // Populate JSON structure to return based on element types
-            //
+            frameView.activity = moment.frame.last;
+            frameView.save(function(err) {
+                //
+                // Populate JSON structure to return based on element types
+                //
 
-            FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
-
-                frameView.activity = moment.frame.last;
-                frameView.save(function(err) {
+                FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
                     if (err) throw err;
 
                     if (populatedFrameView !== null) {
-                        // Replace the generic Frame (e.g., ThoughtFrame) with FrameView associated with the generic Frame for the current Account
+                        // Replace the generic Frame (e.g., Thought) with FramePerspective associated with the generic Frame for the current Account
                         moment.frame = populatedFrameView;
                     }
 
@@ -75,4 +74,17 @@ exports.create = [
     });
 
   }
-]
+];
+
+exports.read = [
+  function(req, res, next) {
+    var id = req.params.id;
+    console.log("requesting image id = " + id);
+    if (id) {
+      Frame.findById(id, function(err, frame) {
+        res.json(frame);
+        // res.json({ user_id: req.user.id, name: req.user.name, scope: req.authInfo.scope })
+      });
+    }
+  }
+];

@@ -3,7 +3,6 @@
 var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account')
-	, TopicFrame = require('../models/topic-frame')
 	, Topic = require('../models/topic')
     , FrameView = require('../models/frame-view')
 	, Story = require('../models/story');

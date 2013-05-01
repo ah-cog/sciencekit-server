@@ -10,24 +10,4 @@ var momentSchema = new mongoose.Schema({
     hidden: Boolean
 });
 
-// momentSchema.statics.createTimelineElement = function(timeline, activity, fn) {
-
-//   var activityType = activity.constructor.modelName;
-
-//   // Create timeline Activity
-//   this.create({
-//     timeline: timeline,
-//     activityType: activityType,
-//     activity: activity
-//   }, function(err, timelineActivity) {
-//     if (err) {
-//       console.log('Error creating timeline Activity: ' + timelineActivity);
-//     }
-//     console.log('Created timeline Activity: ' + timelineActivity);
-
-//     // TODO: Update this to return the Activity based on user's view
-//     fn(null, timelineActivity);
-//   });
-// }
-
 module.exports = mongoose.model('Moment', momentSchema); // Compile schema to a model

@@ -2,13 +2,10 @@
 // Exports methods for Account model.
 var passport = require('passport')
 	, socketio = require('socket.io')
-	, Account = require('../models/account.js')
+	, Account = require('../models/account')
 	, Timeline = require('../models/timeline')
 	, Moment = require('../models/moment')
 	, FrameView = require('../models/frame-view')
-	, ThoughtFrame = require('../models/thought-frame')
-	, TopicFrame = require('../models/topic-frame')
-	, PhotoFrame = require('../models/photo-frame')
 	, Photo = require('../models/photo')
 	, Thought = require('../models/thought')
 	, Story = require('../models/story');
@@ -104,54 +101,63 @@ exports.read = [
 
 							// Populate the timeline
 							var count = moments.length; // Hacky solution used to force synchronous operation. Optimize!
+							console.log(count);
 							moments.forEach(function (moment) {
 
 								// Populate the Moment on the Timeline
-								moment.populate({ path: 'frame', model: moment.frameType }, function(err, populatedMoment) {
+								moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
+
+									console.log("populatedMoment");
+									console.log(populatedMoment);
+
 									if (populatedMoment !== null && populatedMoment.frame !== null) {
 
-										if (moment.frameType.indexOf('Frame') !== -1) {
+										if (moment.frameType === 'Thought' || moment.frameType === 'Photo' || moment.frameType === 'Video') {
+
+											//
+											// Get FrameView for current Account (or create one if none exists)
+											//
+
+											Story.getOrCreateFrameView(populatedMoment.frame, req.user, function (err, frameView) {
+
+												//
+												// Update inactive FrameView
+												//
+
+												//if (frameView.active === true) {
+													frameView.activity = moment.frame.last;
+													frameView.save(function(err) {
+														if (err) throw err;
+
+														// TODO: Make this "synchronous"?  So the Frame that is retreived is always the latest?
+													});
+												//}
+
+												//
+												// Populate JSON structure to return based on element types
+												//
+
+												FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
+
+													if (populatedFrameView !== null) {
+														// Replace the generic Frame (e.g., ThoughtFrame) with FrameView associated with the generic Frame for the current Account
+														moment.frame = populatedFrameView;
+													}
+
+													count--;
+
+													if(count <= 0) {
+
+														// Return result
+														result.moments = moments;
+														res.json(result);
+													}
+												});								;
+											});
 
 										//
-										// Get FrameView for current Account (or create one if none exists)
+										// The Material is not one of the expected Materials
 										//
-
-										Story.getOrCreateFrameView(populatedMoment.frame, req.user, function (err, frameView) {
-
-											//
-											// Update inactive FrameView
-											//
-
-											//if (frameView.active === true) {
-												frameView.activity = moment.frame.last;
-												frameView.save(function(err) {
-													if (err) throw err;
-
-													// TODO: Make this "synchronous"?  So the Frame that is retreived is always the latest?
-												});
-											//}
-
-											//
-											// Populate JSON structure to return based on element types
-											//
-
-											FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
-
-												if (populatedFrameView !== null) {
-													// Replace the generic Frame (e.g., ThoughtFrame) with FrameView associated with the generic Frame for the current Account
-													moment.frame = populatedFrameView;
-												}
-
-												count--;
-
-												if(count <= 0) {
-
-													// Return result
-													result.moments = moments;
-													res.json(result);
-												}
-											});											
-										});
 
 										} else {
 											count--;
@@ -161,6 +167,19 @@ exports.read = [
 												result.moments = moments;
 												res.json(result);
 											}
+										}
+
+									//
+									// The Moment has no Frame
+									//
+
+									} else {
+										count--;
+										if(count <= 0) {
+
+											// Return result
+											result.moments = moments;
+											res.json(result);
 										}
 									}
 								});

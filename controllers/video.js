@@ -3,7 +3,7 @@
 var passport = require('passport')
   , socketio = require('socket.io')
   , Account = require('../models/account')
-  , VideoFrame = require('../models/video-frame')
+  , VideoFrame = require('../models/frame')
   , Video = require('../models/video')
   , Moment = require('../models/moment')
   , FrameView = require('../models/frame-view')
@@ -20,7 +20,7 @@ exports.create = [
         // Get POST data
         var data     = req.body;
         var timeline = data.timeline;
-        console.log("VideoFrame Timeline: %s", timeline);
+        console.log("Video Timeline: %s", timeline);
 
         // Get files
         //console.log(req.files);
@@ -48,15 +48,16 @@ exports.create = [
                     console.log('Created FrameView: ');
                     console.log(frameView);
 
-                    //
-                    // Populate JSON structure to return based on element types
-                    //
+                    frameView.activity = moment.frame.last;
+                    
+                    frameView.save(function(err) {
+                        if (err) throw err;
 
-                    FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
+                        //
+                        // Populate JSON structure to return based on element types
+                        //
 
-                        frameView.activity = moment.frame.last;
-                        frameView.save(function(err) {
-                            if (err) throw err;
+                        FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
 
                             if (populatedFrameView !== null) {
                                 // Replace the generic Frame (e.g., ThoughtFrame) with FrameView associated with the generic Frame for the current Account

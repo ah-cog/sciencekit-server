@@ -37,35 +37,21 @@ frameViewSchema.statics.getPopulated = function(frameView, fn) {
 
 frameViewSchema.statics.getPopulated2 = function(frameView, fn) {
 
-    if (frameView.frameType.indexOf('Frame') !== -1) {
+    console.log('frameView: ');
+    console.log(frameView);
+
+    //if (frameView.frameType.indexOf('Frame') !== -1) {
+    //if (frameView.activityType === 'Thought') {
         frameView.populate({ path: 'activity', model: frameView.activityType }, function(err, populatedFrameView) {
+            console.log('populatedFrameView');
+            console.log(populatedFrameView);
             populatedFrameView.activity.populate({ path: 'author' }, function(err, populatedAuthor) {
                 fn(err, populatedFrameView);
             });
         });
-    } else {
-        fn(err, null);
-    }
+    // } else {
+    //     fn(err, null);
+    // }
 }
-
-// momentSchema.statics.createTimelineElement = function(timeline, element, fn) {
-
-//     var elementType = element.constructor.modelName;
-
-//     // Create timeline element
-//     this.create({
-//         timeline: timeline,
-//         elementType: elementType,
-//         element: element
-//     }, function(err, timelineElement) {
-//         if (err) {
-//             console.log('Error creating timeline element: ' + timelineElement);
-//         }
-//         console.log('Created timeline element: ' + timelineElement);
-
-//         // TODO: Update this to return the element element based on user's view
-//         fn(null, timelineElement);
-//     });
-// }
 
 module.exports = mongoose.model('FrameView', frameViewSchema); // Compile schema to a model

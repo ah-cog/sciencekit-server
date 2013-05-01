@@ -2,13 +2,10 @@ var mongoose = require('mongoose')
 	, Timeline = require('./timeline')
 	, Moment = require('./moment')
 	, FrameView = require('./frame-view')
-	, ThoughtFrame = require('./thought-frame')
 	, Thought = require('./thought')
-	, PhotoFrame = require('./photo-frame')
 	, Photo = require('./photo')
-	, VideoFrame = require('./video-frame')
 	, Video = require('./video')
-	, TopicFrame = require('./topic-frame')
+	, Frame = require('./frame')
 	, Topic = require('./topic');
 
 var storySchema = new mongoose.Schema({
@@ -109,11 +106,13 @@ storySchema.statics.getOrCreateMoment = function(frame, fn) {
 		} else {
 
 			// Timeline Moment doesn't exist.  Create new timeline element.
-			var frameType = frame.constructor.modelName;
+			//var frameType = frame.constructor.modelName;
+			var frameType = frame.type;
 
 			// Save a new timeline element to datastore
 			var moment = new Moment({
 				timeline: frame.timeline,
+				//frameType: frame.type,
 				frameType: frameType,
 				frame: frame
 			});
@@ -202,41 +201,84 @@ storySchema.statics.getOrCreateFrameView = function(frame, account, fn) {
 
 		// Check if a FrameView exists.  If not, create a new one.
 		if(existingFrame !== null) {
+
 			console.log("Found existing FrameView: " + existingFrame);
 			fn(null, existingFrame);
 
 		} else {
 
 			// Frame element doesn't exist, so create one.
-			var frameType = frame.constructor.modelName;
+			//var frameType = frame.constructor.modelName;
 
 			// Get Activity for Frame
 			//var activityType = frame.last.constructor.modelName; // TODO: Check if frame.last exists and only do this if it does exist
-			var activityType = null;
-			var i = 0;
-			var j = frameType.indexOf('Frame');
-			if (j !== -1) {
-				activityType = frameType.substr(i, j);
-				console.log('activityType = ' + activityType);
-			}
+			// var activityType = null;
+			// var i = 0;
+			// var j = frameType.indexOf('Frame');
+			// if (j !== -1) {
+			// 	activityType = frameType.substr(i, j);
+			// 	console.log('activityType = ' + activityType);
+			// }
+			var type = frame.type;
 
 			// Save a new timeline element to datastore
 			var frameView = new FrameView({
 				frame: frame,
-				frameType: frameType,
+				frameType: type,
 
 				// TODO: Check if frame.last exists and only do this if it does exist
 				activity: frame.last,
-				activityType: activityType,
+				activityType: type,
 
 				account: account
 			});
 
 			console.log('Saving FrameView: ' + frameView);
-			frameView.save(function(err) {
-				if(err) throw err;
+			frameView.save(function (err) {
+				if (err) throw err;
 
 				fn(null, frameView);
+			});
+		}
+	});
+}
+
+
+
+storySchema.statics.getOrCreateFrame = function(template, fn) {
+	console.log("getOrCreateFrame");
+
+	// Get frame
+	Frame.findById(template.frame, function(err, existingFrame) {
+		if(err) throw err;
+
+		// Check if a photo exists with the specified ID.  If not, create a new photo.
+		if(existingFrame !== null) {
+			console.log("Found existing Frame: " + existingFrame);
+
+			// Callback
+			fn(null, existingFrame);
+
+		} else {
+
+			// Save a new photo to datastore
+			var frame = new Frame({
+				timeline: template.timeline,
+				type: template.type
+			});
+
+			frame.save(function(err) {
+				// if(err) throw err;
+				console.log('Saving Frame: ' + frame);
+				if (err) { console.log('Error creating Frame: ' + frame); }
+				console.log('Created Frame: ' + frame);
+
+				// Create timeline element (always do this when creating any kind collection like a thought, but not elements in collections)
+				// TODO: Move this elsewhere and add a callback parameter for further calls
+
+				// Create timeline element
+				fn(null, frame);
+
 			});
 		}
 	});
@@ -261,7 +303,9 @@ storySchema.statics.addThought = function(thoughtTemplate, fn) {
 	var Story = this;
 
 	// Create thought collection.  "Recall" thought, i.e., Get existing one with specified ID or create a new one.
-	Story.getThoughtFrame(thoughtTemplate, function(err, thoughtFrame) {
+	//Story.getThoughtFrame(thoughtTemplate, function(err, thoughtFrame) {
+	thoughtTemplate.type = 'Thought';
+	Story.getOrCreateFrame(thoughtTemplate, function (err, thoughtFrame) {
 
         // Create Moment
         //
@@ -275,9 +319,9 @@ storySchema.statics.addThought = function(thoughtTemplate, fn) {
 
       			// Create Moment on Timeline
       			console.log(moment);
-      			moment.populate({ path: 'frame', model: moment.frameType }, function(err, populatedMoment) {
-      				if(moment.frameType === 'ThoughtFrame') {
-      					ThoughtFrame.getPopulated2(populatedMoment.frame, function(err, populatedThoughtFrame) {
+      			moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
+      				if(moment.frameType === 'Thought') {
+      					Frame.getPopulated2(populatedMoment.frame, function(err, populatedThoughtFrame) {
       						fn(err, moment);
       					});
       				}
@@ -320,42 +364,6 @@ storySchema.statics.createThought = function(thoughtFrame, thoughtTemplate, fn) 
 	});
 }
 
-// Gets or creates thought frame.  Creates thought if doesn't exist.
-//
-// If creates a new thought, also:
-// - Creates new Timeline for new ThoughtFrame
-// - Creates Moment for new ThoughtFrame and new Timeline
-storySchema.statics.getThoughtFrame = function(thoughtTemplate, fn) {
- 
-	ThoughtFrame.findById(thoughtTemplate.frame, function(err, existingThoughtFrame) {
-		if(err) throw err;
-
-		// Check if a thought exists with the specified ID.  If not, create a new thought.
-		if(existingThoughtFrame !== null) {
-			console.log("Found existing ThoughtFrame: " + existingThoughtFrame);
-
-			// Callback
-			fn(null, existingThoughtFrame);
-
-		} else {
-
-			// Store new thought to datastore
-			var frame = new ThoughtFrame({
-				timeline: thoughtTemplate.timeline
-			});
-
-			frame.save(function(err) {
-				// if(err) throw err;
-				console.log('Saving frame: ' + frame);
-				if (err) { console.log('Error creating frame: ' + frame); }
-				console.log('Created frame: ' + frame);
-
-				fn(null, frame);
-			});
-		}
-	});
-}
-
 
 
 
@@ -375,8 +383,9 @@ storySchema.statics.addPhoto = function(photoTemplate, fn) {
 
 	var Story = this;
 
-	// "Recall" PhotoFrame, i.e., Get existing one with specified ID or create a new one.
-	Story.getOrCreatePhotoFrame(photoTemplate, function(err, photoFrame) {
+	// "Recall" Frame for Photo, i.e., Get existing one with specified ID or create a new one.
+	photoTemplate.type = 'Photo';
+	Story.getOrCreateFrame(photoTemplate, function(err, photoFrame) {
 
         // Create Moment
         //
@@ -390,52 +399,15 @@ storySchema.statics.addPhoto = function(photoTemplate, fn) {
 
       			// Create Moment on Timeline
       			console.log(moment);
-      			moment.populate({ path: 'frame', model: moment.frameType }, function (err, populatedMoment) {
-      				if(moment.frameType === 'PhotoFrame') {
-      					PhotoFrame.getPopulated2(populatedMoment.frame, function (err, populatedPhotoFrame) {
+      			moment.populate({ path: 'frame', model: 'Frame' }, function (err, populatedMoment) {
+      				if(moment.frameType === 'Photo') {
+      					Frame.getPopulated2(populatedMoment.frame, function (err, populatedPhotoFrame) {
       						fn(err, moment);
       					});
       				}
       			});
             });
 		});
-	});
-}
-
-storySchema.statics.getOrCreatePhotoFrame = function(photoTemplate, fn) {
-	console.log("getPhotoFrame");
-
-	PhotoFrame.findById(photoTemplate.frame, function(err, existingPhoto) {
-		if(err) throw err;
-
-		// Check if a photo exists with the specified ID.  If not, create a new photo.
-		if(existingPhoto !== null) {
-			console.log("Found existing photo: " + existingPhoto);
-
-			// Callback
-			fn(null, existingPhoto);
-
-		} else {
-
-			// Save a new photo to datastore
-			var photoFrame = new PhotoFrame({
-				timeline: photoTemplate.timeline
-			});
-
-			photoFrame.save(function(err) {
-				// if(err) throw err;
-				console.log('Saving PhotoFrame: ' + photoFrame);
-				if (err) { console.log('Error creating PhotoFrame: ' + photoFrame); }
-				console.log('Created PhotoFrame: ' + photoFrame);
-
-				// Create timeline element (always do this when creating any kind collection like a thought, but not elements in collections)
-				// TODO: Move this elsewhere and add a callback parameter for further calls
-
-				// Create timeline element
-				fn(null, photoFrame);
-
-			});
-		}
 	});
 }
 
@@ -496,7 +468,8 @@ storySchema.statics.addVideo = function(videoTemplate, fn) {
 	var Story = this;
 
 	// "Recall" VideoFrame, i.e., Get existing one with specified ID or create a new one.
-	Story.getOrCreateVideoFrame(videoTemplate, function(err, videoFrame) {
+	videoTemplate.type = 'Video';
+	Story.getOrCreateFrame(videoTemplate, function(err, videoFrame) {
 
         // Create Moment
         //
@@ -510,56 +483,15 @@ storySchema.statics.addVideo = function(videoTemplate, fn) {
 
       			// Create Moment on Timeline
       			console.log(moment);
-      			moment.populate({ path: 'frame', model: moment.frameType }, function (err, populatedMoment) {
-      				if(moment.frameType === 'VideoFrame') {
-      					VideoFrame.getPopulated2(populatedMoment.frame, function (err, populatedVideoFrame) {
+      			moment.populate({ path: 'frame', model: 'Frame' }, function (err, populatedMoment) {
+      				if(moment.frameType === 'Video') {
+      					Frame.getPopulated2(populatedMoment.frame, function (err, populatedVideoFrame) {
       						fn(err, moment);
       					});
       				}
       			});
             });
 		});
-	});
-}
-
-storySchema.statics.getOrCreateVideoFrame = function(videoTemplate, fn) {
-	console.log("getOrCreateVideoFrame");
-
-	// Set model for activity frame
-	var FrameModel = VideoFrame;
-
-	// Get frame
-	FrameModel.findById(videoTemplate.frame, function(err, existingFrame) {
-		if(err) throw err;
-
-		// Check if a photo exists with the specified ID.  If not, create a new photo.
-		if(existingFrame !== null) {
-			console.log("Found existing PhotoFrame: " + existingFrame);
-
-			// Callback
-			fn(null, existingFrame);
-
-		} else {
-
-			// Save a new photo to datastore
-			var frame = new FrameModel({
-				timeline: videoTemplate.timeline
-			});
-
-			frame.save(function(err) {
-				// if(err) throw err;
-				console.log('Saving PhotoFrame: ' + frame);
-				if (err) { console.log('Error creating PhotoFrame: ' + frame); }
-				console.log('Created PhotoFrame: ' + frame);
-
-				// Create timeline element (always do this when creating any kind collection like a thought, but not elements in collections)
-				// TODO: Move this elsewhere and add a callback parameter for further calls
-
-				// Create timeline element
-				fn(null, frame);
-
-			});
-		}
 	});
 }
 
@@ -619,7 +551,7 @@ storySchema.statics.addTopic = function(topicTemplate, fn) {
 	var Story = this;
 
 	// "Recall" Topic, i.e., Get existing one with specified ID or create a new one.
-	Story.getTopicFrame(topicTemplate, function(err, topicFrame) {
+	Story.getOrCreateFrame(topicTemplate, function (err, topicFrame) {
 
         // Create Moment
         //
@@ -633,8 +565,8 @@ storySchema.statics.addTopic = function(topicTemplate, fn) {
 
       			// Create Moment on Timeline
       			console.log(moment);
-      			moment.populate({ path: 'frame', model: moment.frameType }, function(err, populatedMoment) {
-      				if(moment.frameType === 'TopicFrame') {
+      			moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
+      				if(moment.frameType === 'Topic') {
       					TopicFrame.getPopulated2(populatedMoment.frame, function(err, populatedTopicFrame) {
       						fn(err, moment);
       					});
@@ -675,42 +607,6 @@ storySchema.statics.createTopic = function(topicFrame, topicTemplate, fn) {
 			fn(null, topic);
 
 		});
-	});
-}
-
-// Gets or creates TopicFrame.  Creates TopicFrame if doesn't exist.
-//
-// If creates a new TopicFrame, also:
-// - Creates new Timeline for new TopicFrame
-// - Creates Moment for new TopicFrame and new Timeline
-storySchema.statics.getTopicFrame = function(topicTemplate, fn) {
- 
-	TopicFrame.findById(topicTemplate.frame, function(err, existingFrame) {
-		if(err) throw err;
-
-		// Check if a Topic exists with the specified ID.  If not, create a new Topic.
-		if(existingFrame !== null) {
-			console.log("Found existing TopicFrame: " + existingFrame);
-
-			// Callback
-			fn(null, existingFrame);
-
-		} else {
-
-			// Store new frame to database
-			var frame = new TopicFrame({
-				timeline: topicTemplate.timeline
-			});
-
-			frame.save(function(err) {
-				// if(err) throw err;
-				console.log('Saving frame: ' + frame);
-				if (err) { console.log('Error creating frame: ' + frame); }
-				console.log('Created frame: ' + frame);
-
-				fn(null, frame);
-			});
-		}
 	});
 }
 

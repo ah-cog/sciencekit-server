@@ -2,7 +2,7 @@ var mongoose = require('mongoose')
 	, Account = require('./account');
 
 var photoSchema = new mongoose.Schema({
-	frame: { type: mongoose.Schema.Types.ObjectId, ref: 'PhotoFrame' },
+	frame: { type: mongoose.Schema.Types.ObjectId, ref: 'Frame' },
 	reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Photo' },
 
 	uri: { type: String, required: true },

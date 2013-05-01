@@ -1,6 +1,5 @@
 var mongoose = require('mongoose')
 	, Account = require('./account');
-//	, TopicFrame = require('./thought-frame');
 
 // A "bump" is defined as a general mechanism for assignming polarity to an Artifact.
 var bumpSchema = new mongoose.Schema({

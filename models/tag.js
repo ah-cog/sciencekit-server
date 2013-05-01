@@ -1,6 +1,5 @@
 var mongoose = require('mongoose')
 	, Account = require('./account');
-//	, TopicFrame = require('./thought-frame');
 
 var tagSchema = new mongoose.Schema({
 	frame: { type: mongoose.Schema.Types.ObjectId },

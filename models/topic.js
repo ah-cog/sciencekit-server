@@ -1,9 +1,8 @@
 var mongoose = require('mongoose')
-	, Account = require('./account')
-	, TopicFrame = require('./thought-frame');
+	, Account = require('./account');
 
 var topicSchema = new mongoose.Schema({
-	frame: { type: mongoose.Schema.Types.ObjectId, ref: 'TopicFrame' },
+	frame: { type: mongoose.Schema.Types.ObjectId, ref: 'Frame' },
 	reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Topic' },
 
 	text: { type: String, required: true }, // e.g., 'Thought'

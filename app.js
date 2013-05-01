@@ -19,9 +19,7 @@ var express  = require('express')
 var AccessToken = require('./models/accesstoken')
   , Account = require('./models/account')
   , Client = require('./models/client')
-  , ThoughtFrame = require('./models/thought-frame')
   , Thought = require('./models/thought') // a crumb is an atom, it's part of a story
-  , PhotoFrame = require('./models/photo-frame')
   , Photo = require('./models/photo');
 
 
@@ -275,9 +273,8 @@ app.get('/api/tag',  controllers.Tag.read);
 app.post('/api/topic', controllers.Topic.create);
 app.put('/api/topic', controllers.Topic.update);
 
-app.get('/api/photo',     controllers.PhotoFrame.list);
 app.post('/api/photo',    controllers.Photo.create);
-app.get('/api/photo/:id', controllers.PhotoFrame.read);
+app.get('/api/photo/:id', controllers.Photo.read);
 
 app.post('/api/video',    controllers.Video.create);
 

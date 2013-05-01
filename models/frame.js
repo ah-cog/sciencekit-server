@@ -7,7 +7,7 @@ var frameSchema = new mongoose.Schema({
 	timeline: { type: mongoose.Schema.Types.ObjectId, ref: 'Timeline' }, // Timeline on which this event occurred.  (NOT! the following) Timeline for which this element is the head
 
 	// myModelObject.constructor.modelName;
-	//frameType: { type: String }, // e.g., 'ThoughtFrame'
+	type: { type: 'String' }, // e.g., 'Thought' (the name of the model being framed)
 
 	first: { type: mongoose.Schema.Types.ObjectId }, // first Topic created for TopicFrame
 	last:  { type: mongoose.Schema.Types.ObjectId }, // most recently created Topic for TopicFrame
@@ -16,24 +16,24 @@ var frameSchema = new mongoose.Schema({
 	hidden: Boolean
 });
 
-topicFrameSchema.statics.getPopulated = function(topicFrame, fn) {
+frameSchema.statics.getPopulated = function(frame, fn) {
 
-	this.findById(topicFrame.id, function(err, topicFrame) {
-		topicFrame.populate({ path: 'last', model: 'Topic' }, function(err, populatedTopicFrame) {
+	this.findById(frame.id, function(err, frame) {
+		frame.populate({ path: 'last', model: frame.type }, function(err, populatedTopicFrame) {
 			populatedTopicFrame.populate({ path: 'author' }, function(err, populatedAuthor) {
-				fn(err, topicFrame);
+				fn(err, frame);
 			});
 		});
 	});
 }
 
-topicFrameSchema.statics.getPopulated2 = function(topicFrame, fn) {
+frameSchema.statics.getPopulated2 = function(frame, fn) {
 
-	topicFrame.populate({ path: 'last', model: 'Topic' }, function(err, populatedTopicFrame) {
+	frame.populate({ path: 'last', model: frame.type }, function(err, populatedTopicFrame) {
 		populatedTopicFrame.populate({ path: 'author' }, function(err, populatedAuthor) {
 			fn(err, populatedTopicFrame);
 		});
 	});
 }
 
-module.exports = mongoose.model('TopicFrame', frameSchema); // Compile schema to a model
+module.exports = mongoose.model('Frame', frameSchema); // Compile schema to a model

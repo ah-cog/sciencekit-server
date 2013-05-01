@@ -2,7 +2,7 @@ var mongoose = require('mongoose')
 	, Account = require('./account');
 
 var videoSchema = new mongoose.Schema({
-	frame: { type: mongoose.Schema.Types.ObjectId, ref: 'VideoFrame' },
+	frame: { type: mongoose.Schema.Types.ObjectId, ref: 'Frame' },
 	reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Video' },
 
 	uri: { type: String, required: true },

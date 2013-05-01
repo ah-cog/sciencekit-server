@@ -5,7 +5,7 @@ var passport = require('passport')
 	, Account = require('../models/account')
 	, Timeline = require('../models/timeline')
 	, Moment = require('../models/moment')
-	, FrameView = require('../models/frame-view')
+	, Perspective = require('../models/perspective')
 	, Photo = require('../models/photo')
 	, Thought = require('../models/thought')
 	, Story = require('../models/story');
@@ -115,18 +115,18 @@ exports.read = [
 										if (moment.frameType === 'Thought' || moment.frameType === 'Photo' || moment.frameType === 'Video') {
 
 											//
-											// Get FrameView for current Account (or create one if none exists)
+											// Get Perspective for current Account (or create one if none exists)
 											//
 
-											Story.getOrCreateFrameView(populatedMoment.frame, req.user, function (err, frameView) {
+											Story.getOrCreatePerspective(populatedMoment.frame, req.user, function (err, perspective) {
 
 												//
-												// Update inactive FrameView
+												// Update inactive Perspective
 												//
 
-												//if (frameView.active === true) {
-													frameView.activity = moment.frame.last;
-													frameView.save(function(err) {
+												//if (perspective.active === true) {
+													perspective.activity = moment.frame.last;
+													perspective.save(function(err) {
 														if (err) throw err;
 
 														// TODO: Make this "synchronous"?  So the Frame that is retreived is always the latest?
@@ -137,11 +137,11 @@ exports.read = [
 												// Populate JSON structure to return based on element types
 												//
 
-												FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
+												Perspective.getPopulated2(perspective, function(err, populatedPerspective) {
 
-													if (populatedFrameView !== null) {
-														// Replace the generic Frame (e.g., ThoughtFrame) with FrameView associated with the generic Frame for the current Account
-														moment.frame = populatedFrameView;
+													if (populatedPerspective !== null) {
+														// Replace the generic Frame (e.g., ThoughtFrame) with Perspective associated with the generic Frame for the current Account
+														moment.frame = populatedPerspective;
 													}
 
 													count--;

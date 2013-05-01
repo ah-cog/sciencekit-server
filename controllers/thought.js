@@ -4,7 +4,7 @@ var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account')
 	, Thought = require('../models/thought')
-    , FrameView = require('../models/frame-view')
+    , Perspective = require('../models/perspective')
 	, Story = require('../models/story');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
@@ -29,29 +29,29 @@ exports.create = [
             Story.addThought(thoughtTemplate, function(err, moment) {
                 console.log("MOMENT: ");
                 console.log(moment);
-                Story.getOrCreateFrameView(moment.frame, req.user, function (err, frameView) {
-                    console.log('Created FrameView: ');
-                    console.log(frameView);
+                Story.getOrCreatePerspective(moment.frame, req.user, function (err, perspective) {
+                    console.log('Created Perspective: ');
+                    console.log(perspective);
 
                     //
                     // Update Activity
                     //
-                    frameView.activity = moment.frame.last;
+                    perspective.activity = moment.frame.last;
 
                     //
                     // Save updated Activity
                     //
-                    frameView.save(function(err) {
+                    perspective.save(function(err) {
                         if (err) throw err;
 
                         //
                         // Populate JSON structure to return based on element types
                         //
 
-                        FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
-                            if (populatedFrameView !== null) {
-                                // Replace the generic Frame (e.g., ThoughtFrame) with FrameView associated with the generic Frame for the current Account
-                                moment.frame = populatedFrameView;
+                        Perspective.getPopulated2(perspective, function(err, populatedPerspective) {
+                            if (populatedPerspective !== null) {
+                                // Replace the generic Frame (e.g., ThoughtFrame) with Perspective associated with the generic Frame for the current Account
+                                moment.frame = populatedPerspective;
                             }
 
                             io.sockets.emit('thought', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
@@ -84,25 +84,25 @@ exports.update = [
             // TODO: Verify valid JSON
             // TODO: Verify required fields for element are present
 
-            FrameView.findOne({ frame: thoughtTemplate.frame, account: account }, function(err, frameView) {
+            Perspective.findOne({ frame: thoughtTemplate.frame, account: account }, function(err, perspective) {
                 if (thoughtTemplate.hasOwnProperty('active')) {
-                    frameView.active = thoughtTemplate.active;
+                    perspective.active = thoughtTemplate.active;
                 }
 
                 if (thoughtTemplate.hasOwnProperty('visible')) {
-                    frameView.visible = thoughtTemplate.visible;
+                    perspective.visible = thoughtTemplate.visible;
                 }
 
                 if (thoughtTemplate.hasOwnProperty('activity')) {
-                    frameView.activity = thoughtTemplate.activity;
+                    perspective.activity = thoughtTemplate.activity;
                 }
 
-                frameView.save(function(err) {
+                perspective.save(function(err) {
                     if(err) throw err;
 
-                    io.sockets.emit('thought', frameView); // TODO: is this the wrong place?  better place?  guaranteed here?
+                    io.sockets.emit('thought', perspective); // TODO: is this the wrong place?  better place?  guaranteed here?
                     //res.json(moment);
-                    res.json(frameView);
+                    res.json(perspective);
                 });
             });
         });

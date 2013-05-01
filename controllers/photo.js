@@ -6,7 +6,7 @@ var passport = require('passport')
   , Photo = require('../models/photo')
   , Moment = require('../models/moment')
   , Frame = require('../models/frame')
-  , FrameView = require('../models/frame-view')
+  , Perspective = require('../models/perspective')
   , Story = require('../models/story');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
@@ -44,22 +44,22 @@ exports.create = [
         // io.sockets.emit('photo', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
         // res.json(moment);
 
-        Story.getOrCreateFrameView(moment.frame, req.user, function (err, frameView) {
-            console.log('Created FrameView: ');
-            console.log(frameView);
+        Story.getOrCreatePerspective(moment.frame, req.user, function (err, perspective) {
+            console.log('Created Perspective: ');
+            console.log(perspective);
 
-            frameView.activity = moment.frame.last;
-            frameView.save(function(err) {
+            perspective.activity = moment.frame.last;
+            perspective.save(function(err) {
                 //
                 // Populate JSON structure to return based on element types
                 //
 
-                FrameView.getPopulated2(frameView, function(err, populatedFrameView) {
+                Perspective.getPopulated2(perspective, function(err, populatedPerspective) {
                     if (err) throw err;
 
-                    if (populatedFrameView !== null) {
+                    if (populatedPerspective !== null) {
                         // Replace the generic Frame (e.g., Thought) with FramePerspective associated with the generic Frame for the current Account
-                        moment.frame = populatedFrameView;
+                        moment.frame = populatedPerspective;
                     }
 
                     io.sockets.emit('photo', moment); // TODO: is this the wrong place?  better place?  guaranteed here?

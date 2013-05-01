@@ -1,7 +1,7 @@
 var mongoose = require('mongoose')
 	, Timeline = require('./timeline')
 	, Moment = require('./moment')
-	, FrameView = require('./frame-view')
+	, Perspective = require('./perspective')
 	, Thought = require('./thought')
 	, Photo = require('./photo')
 	, Video = require('./video')
@@ -179,30 +179,30 @@ storySchema.statics.createMomentTimeline = function(moment, fn) {
 
 
 
-// FrameView
+// Perspective
 
-// Create FrameView for specified Timeline.
-// Creating a FrameView for an existing Timeline also creates a new Timeline for 
-// which the created FrameView is the "source" FrameView.  Therefore every FrameView is 
+// Create Perspective for specified Timeline.
+// Creating a Perspective for an existing Timeline also creates a new Timeline for 
+// which the created Perspective is the "source" Perspective.  Therefore every Perspective is 
 // the source of a Timeline.
-storySchema.statics.getOrCreateFrameView = function(frame, account, fn) {
+storySchema.statics.getOrCreatePerspective = function(frame, account, fn) {
 
 	var Story = this;
 
 	console.log("Frame:");
 	console.log(frame);
 
-	FrameView.findOne({
+	Perspective.findOne({
 		frame: frame,
 		account: account
 
 	}, function(err, existingFrame) {
 		if(err) throw err;
 
-		// Check if a FrameView exists.  If not, create a new one.
+		// Check if a Perspective exists.  If not, create a new one.
 		if(existingFrame !== null) {
 
-			console.log("Found existing FrameView: " + existingFrame);
+			console.log("Found existing Perspective: " + existingFrame);
 			fn(null, existingFrame);
 
 		} else {
@@ -222,7 +222,7 @@ storySchema.statics.getOrCreateFrameView = function(frame, account, fn) {
 			var type = frame.type;
 
 			// Save a new timeline element to datastore
-			var frameView = new FrameView({
+			var perspective = new Perspective({
 				frame: frame,
 				frameType: type,
 
@@ -233,11 +233,11 @@ storySchema.statics.getOrCreateFrameView = function(frame, account, fn) {
 				account: account
 			});
 
-			console.log('Saving FrameView: ' + frameView);
-			frameView.save(function (err) {
+			console.log('Saving Perspective: ' + perspective);
+			perspective.save(function (err) {
 				if (err) throw err;
 
-				fn(null, frameView);
+				fn(null, perspective);
 			});
 		}
 	});

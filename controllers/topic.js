@@ -4,7 +4,7 @@ var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account')
 	, Topic = require('../models/topic')
-    , FrameView = require('../models/frame-view')
+    , Perspective = require('../models/perspective')
 	, Story = require('../models/story');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
@@ -53,25 +53,25 @@ exports.update = [
             // TODO: Verify valid JSON
             // TODO: Verify required fields for element are present
 
-            FrameView.findOne({ frame: topicTemplate.frame, account: account }, function(err, frameView) {
+            Perspective.findOne({ frame: topicTemplate.frame, account: account }, function(err, perspective) {
                 if (topicTemplate.hasOwnProperty('active')) {
-                    frameView.active = topicTemplate.active;
+                    perspective.active = topicTemplate.active;
                 }
 
                 if (topicTemplate.hasOwnProperty('visible')) {
-                    frameView.visible = topicTemplate.visible;
+                    perspective.visible = topicTemplate.visible;
                 }
 
                 if (topicTemplate.hasOwnProperty('activity')) {
-                    frameView.activity = topicTemplate.activity;
+                    perspective.activity = topicTemplate.activity;
                 }
 
-                frameView.save(function(err) {
+                perspective.save(function(err) {
                     if(err) throw err;
 
                     //io.sockets.emit('thought', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
                     //res.json(moment);
-                    res.json(frameView);
+                    res.json(perspective);
                 });
             });
         });

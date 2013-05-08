@@ -37,21 +37,36 @@ perspectiveSchema.statics.getPopulated = function(perspective, fn) {
 
 perspectiveSchema.statics.getPopulated2 = function(perspective, fn) {
 
-    console.log('perspective: ');
+    console.log('Perspective being populated: ');
     console.log(perspective);
 
-    //if (perspective.frameType.indexOf('Frame') !== -1) {
-    //if (perspective.activityType === 'Thought') {
+    console.log('Activity:');
+    console.log(perspective.activity);
+
+    if (perspective.activity !== undefined) {
+
+        //
+        // Populate the Perspective.
+        //
+
         perspective.populate({ path: 'activity', model: perspective.activityType }, function(err, populatedPerspective) {
-            console.log('populatedPerspective');
-            console.log(populatedPerspective);
+            if (err) throw err;
+
             populatedPerspective.activity.populate({ path: 'author' }, function(err, populatedAuthor) {
+                if (err) throw err;
+
                 fn(err, populatedPerspective);
             });
         });
-    // } else {
-    //     fn(err, null);
-    // }
+
+    } else {
+
+        //
+        // Return the original object.
+        //
+
+        fn(null, perspective);
+    }
 }
 
 module.exports = mongoose.model('Perspective', perspectiveSchema); // Compile schema to a model

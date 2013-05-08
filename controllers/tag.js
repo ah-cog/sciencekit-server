@@ -144,11 +144,15 @@ exports.create = [
 
                                             var frameType = null;
                                             if (template.frameType === 'video') {
-                                                frameType = 'VideoFrame';
+                                                frameType = 'Video';
                                             } else if (template.frameType === 'thought') {
-                                                frameType = 'ThoughtFrame';
+                                                frameType = 'Thought';
                                             } else if (template.frameType === 'photo') {
-                                                frameType = 'PhotoFrame';
+                                                frameType = 'Photo';
+                                            } else if (template.frameType === 'motion') {
+                                                frameType = 'Motion';
+                                            } else if (template.frameType === 'sketch') {
+                                                frameType = 'Sketch';
                                             }
 
                                             Moment.create({
@@ -188,11 +192,15 @@ exports.create = [
 
                                             var frameType = null;
                                             if (template.frameType === 'video') {
-                                                frameType = 'VideoFrame';
+                                                frameType = 'Video';
                                             } else if (template.frameType === 'thought') {
-                                                frameType = 'ThoughtFrame';
+                                                frameType = 'Thought';
                                             } else if (template.frameType === 'photo') {
-                                                frameType = 'PhotoFrame';
+                                                frameType = 'Photo';
+                                            } else if (template.frameType === 'motion') {
+                                                frameType = 'Motion';
+                                            } else if (template.frameType === 'sketch') {
+                                                frameType = 'Sketch';
                                             }
 
                                             Moment.create({

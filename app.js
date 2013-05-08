@@ -252,6 +252,13 @@ app.all('/api/*', function(req, res, next) {
     }
 });
 
+app.get('/api/status', function(req, res, next) {
+    res.json({
+        server: 'sciencekit',
+        version: '0.1'
+    });
+});
+
 // Resource Server (this is an OAuth2 term)
 // The resource server stores the protected resources (API URIs that require authentication).
 app.get('/api/account',   controllers.account.read);
@@ -277,6 +284,10 @@ app.post('/api/photo',    controllers.Photo.create);
 app.get('/api/photo/:id', controllers.Photo.read);
 
 app.post('/api/video',    controllers.Video.create);
+
+app.post('/api/motion',    controllers.Motion.create);
+
+app.post('/api/sketch',    controllers.Sketch.create);
 
 
 

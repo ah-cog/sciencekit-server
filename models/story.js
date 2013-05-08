@@ -5,6 +5,8 @@ var mongoose = require('mongoose')
 	, Thought = require('./thought')
 	, Photo = require('./photo')
 	, Video = require('./video')
+	, Motion = require('./motion')
+	, Sketch = require('./sketch')
 	, Frame = require('./frame')
 	, Topic = require('./topic');
 
@@ -605,6 +607,180 @@ storySchema.statics.createTopic = function(topicFrame, topicTemplate, fn) {
 			console.log(topicFrame);
 
 			fn(null, topic);
+
+		});
+	});
+}
+
+
+
+
+// Motion
+
+// Add Thought to Story.
+// This consists of creating the Thought and setting up associated models  
+// and relationships.
+storySchema.statics.addMotion = function(template, fn) {
+
+	// Make sure all required properties are present
+	//if (!template.hasOwnProperty('points') || !template.hasOwnProperty('timeline')) {
+	if (!template.hasOwnProperty('timeline')) {
+		console.log('Cannot add Motion.  Required properties are missing.');
+		fn('Cannot add Motion.  Required properties are missing.');
+	}
+
+	var Story = this;
+
+	// Create thought collection.  "Recall" thought, i.e., Get existing one with specified ID or create a new one.
+	template.type = 'Motion';
+	Story.getOrCreateFrame(template, function (err, frame) {
+
+        // Create Moment
+        //
+        // Notes:
+        // - There's only one Moment per ThoughtFrame
+
+    	Story.getOrCreateMoment(frame, function(err, moment) {
+
+    		// Create Thought
+    		Story.createMotion(frame, template, function(err, thought) {
+
+      			// Create Moment on Timeline
+      			console.log(moment);
+      			moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
+      				if(moment.frameType === 'Motion') {
+      					Frame.getPopulated2(populatedMoment.frame, function(err, populatedFrame) {
+      						fn(err, moment);
+      					});
+      				}
+      			});
+            });
+		});
+	});
+}
+
+storySchema.statics.createMotion = function(frame, template, fn) {
+
+	// Create Motion
+	Motion.create({
+		frame: frame,
+		reference: template.reference || null,
+
+		//points: template.points,
+
+		author: template.account
+
+	}, function(err, motion) {
+
+		// Save Motion to datastore
+		console.log('Creating Motion.');
+		if (err) { console.log('Error creating Motion: ' + motion); }
+		console.log('Created Motion: ' + motion);
+
+		// Store points
+		motion.points = []; // Initialize array
+		for (var i = 0; i < template.points.length; i++) {
+			
+			var currentPoint = { x: template.points[i].x, y: template.points[i].y, z: template.points[i].z, t: template.points[i].t };
+			console.log('Saving point: ');
+			console.log(currentPoint);
+
+			motion.points.push(currentPoint);
+		}
+
+		// Save Motion updated with points
+		motion.save(function(err) {
+
+			// Update reference to last Motion
+			frame.last = motion;
+			if(frame.first == null) { // For new Thoughts, set the first Motion.
+				frame.first = motion;
+			}
+			frame.save(function(err) {
+
+				console.log("Saved updated Motion");
+				console.log(frame);
+
+				fn(null, motion);
+
+			});
+		});
+	});
+}
+
+// Sketch
+
+// Add Thought to Story.
+// This consists of creating the Thought and setting up associated models  
+// and relationships.
+storySchema.statics.addSketch = function(template, fn) {
+
+	// Make sure all required properties are present
+	//if (!template.hasOwnProperty('points') || !template.hasOwnProperty('timeline')) {
+	if (!template.hasOwnProperty('timeline')) {
+		console.log('Cannot add Sketch.  Required properties are missing.');
+		fn('Cannot add Sketch.  Required properties are missing.');
+	}
+
+	var Story = this;
+
+	// Create thought collection.  "Recall" thought, i.e., Get existing one with specified ID or create a new one.
+	template.type = 'Sketch';
+	Story.getOrCreateFrame(template, function (err, frame) {
+
+        // Create Moment
+        //
+        // Notes:
+        // - There's only one Moment per Frame
+
+    	Story.getOrCreateMoment(frame, function(err, moment) {
+
+    		// Create Thought
+    		Story.createSketch(frame, template, function(err, thought) {
+
+      			// Create Moment on Timeline
+      			console.log(moment);
+      			moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
+      				if(moment.frameType === template.type) {
+      					Frame.getPopulated2(populatedMoment.frame, function(err, populatedFrame) {
+      						fn(err, moment);
+      					});
+      				}
+      			});
+            });
+		});
+	});
+}
+
+storySchema.statics.createSketch = function(frame, template, fn) {
+
+	// Create Sketch
+	Sketch.create({
+		frame: frame,
+		reference: template.reference || null,
+
+		imageData: template.imageData,
+
+		author: template.account
+
+	}, function(err, sketch) {
+
+		// Save Sketch to datastore
+		console.log('Creating Sketch.');
+		if (err) { console.log('Error creating Sketch: ' + sketch); }
+		console.log('Created Sketch: ' + sketch);
+
+		// Update reference to last Sketch
+		frame.last = sketch;
+		if(frame.first == null) { // For new Frame, set the first Sketch.
+			frame.first = sketch;
+		}
+		frame.save(function(err) {
+
+			console.log("Saved updated Sketch");
+			console.log(frame);
+
+			fn(null, sketch);
 
 		});
 	});

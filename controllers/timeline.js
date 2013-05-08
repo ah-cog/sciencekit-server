@@ -112,7 +112,7 @@ exports.read = [
 
 									if (populatedMoment !== null && populatedMoment.frame !== null) {
 
-										if (moment.frameType === 'Thought' || moment.frameType === 'Photo' || moment.frameType === 'Video') {
+										if (moment.frameType === 'Thought' || moment.frameType === 'Photo' || moment.frameType === 'Video' || moment.frameType === 'Motion' || moment.frameType === 'Sketch') {
 
 											//
 											// Get Perspective for current Account (or create one if none exists)

@@ -7,3 +7,5 @@ exports.Avatar = require('./avatar');
 exports.Topic = require('./topic');
 exports.Tag = require('./tag');
 exports.Video = require('./video');
+exports.Motion = require('./motion');
+exports.Sketch = require('./sketch');

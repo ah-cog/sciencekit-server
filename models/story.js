@@ -760,6 +760,8 @@ storySchema.statics.createSketch = function(frame, template, fn) {
 		reference: template.reference || null,
 
 		imageData: template.imageData,
+		imageWidth: template.imageWidth,
+		imageHeight: template.imageHeight,
 
 		author: template.account
 

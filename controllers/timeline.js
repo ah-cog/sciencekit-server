@@ -152,7 +152,7 @@ exports.read = [
 														result.moments = moments;
 														res.json(result);
 													}
-												});								;
+												});
 											});
 
 										//

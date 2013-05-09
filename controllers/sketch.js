@@ -37,7 +37,9 @@ exports.create = [
             activityTemplate.timeline = timeline;
             activityTemplate.account  = account;
             activityTemplate.imageData = data['imageData'];
-            if (data.hasOwnProperty('activity'))   activityTemplate.activity   = data.activity;
+            activityTemplate.imageWidth = data['imageWidth'];
+            activityTemplate.imageHeight = data['imageHeight'];
+            if (data.hasOwnProperty('activity')) activityTemplate.activity = data.activity;
             if (data.hasOwnProperty('reference')) activityTemplate.reference = data.reference;
 
             // console.log("videoUri = " + activityTemplate.uri);

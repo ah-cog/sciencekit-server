@@ -6,6 +6,8 @@ var sketchSchema = new mongoose.Schema({
 	reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Sketch' },
 
 	imageData: { type: String },
+	imageWidth: { type: Number },
+	imageHeight: { type: Number },
 
 	date: { type: Date, default: Date.now },
 	hidden: Boolean,

@@ -9,3 +9,4 @@ exports.Tag = require('./tag');
 exports.Video = require('./video');
 exports.Motion = require('./motion');
 exports.Sketch = require('./sketch');
+exports.Narration = require('./narration');

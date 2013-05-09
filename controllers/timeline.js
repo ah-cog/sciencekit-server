@@ -8,7 +8,8 @@ var passport = require('passport')
 	, Perspective = require('../models/perspective')
 	, Photo = require('../models/photo')
 	, Thought = require('../models/thought')
-	, Story = require('../models/story');
+	, Story = require('../models/story')
+	, Narration = require('../models/narration');
 
 // TODO: Delete the following code when done testing... this shouldn't be public :-)
 exports.read = [
@@ -112,7 +113,7 @@ exports.read = [
 
 									if (populatedMoment !== null && populatedMoment.frame !== null) {
 
-										if (moment.frameType === 'Thought' || moment.frameType === 'Photo' || moment.frameType === 'Video' || moment.frameType === 'Motion' || moment.frameType === 'Sketch') {
+										if (moment.frameType === 'Thought' || moment.frameType === 'Photo' || moment.frameType === 'Video' || moment.frameType === 'Motion' || moment.frameType === 'Sketch' || moment.frameType === 'Narration') {
 
 											//
 											// Get Perspective for current Account (or create one if none exists)

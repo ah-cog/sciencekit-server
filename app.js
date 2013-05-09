@@ -289,6 +289,8 @@ app.post('/api/motion',    controllers.Motion.create);
 
 app.post('/api/sketch',    controllers.Sketch.create);
 
+app.post('/api/narration',    controllers.Narration.create);
+
 
 
 

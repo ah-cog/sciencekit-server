@@ -8,7 +8,8 @@ var mongoose = require('mongoose')
 	, Motion = require('./motion')
 	, Sketch = require('./sketch')
 	, Frame = require('./frame')
-	, Topic = require('./topic');
+	, Topic = require('./topic')
+	, Narration = require('./narration');
 
 var storySchema = new mongoose.Schema({
 	timeline: { type: mongoose.Schema.ObjectId, ref: 'Timeline', required: true },
@@ -783,6 +784,84 @@ storySchema.statics.createSketch = function(frame, template, fn) {
 			console.log(frame);
 
 			fn(null, sketch);
+
+		});
+	});
+}
+
+// Narration
+
+// Add Narration to Story.
+// This consists of creating the Narration and setting up associated models  
+// and relationships.
+storySchema.statics.addNarration = function(template, fn) {
+
+	// Make sure all required properties are present
+	//if (!template.hasOwnProperty('points') || !template.hasOwnProperty('timeline')) {
+	if (!template.hasOwnProperty('timeline')) {
+		console.log('Cannot add Sketch.  Required properties are missing.');
+		fn('Cannot add Narration.  Required properties are missing.');
+	}
+
+	var Story = this;
+
+	// Create Narration collection.  "Recall" Narration, i.e., Get existing one with specified ID or create a new one.
+	template.type = 'Narration';
+	Story.getOrCreateFrame(template, function (err, frame) {
+
+        // Create Moment
+        //
+        // Notes:
+        // - There's only one Moment per Frame
+
+    	Story.getOrCreateMoment(frame, function(err, moment) {
+
+    		// Create Thought
+    		Story.createNarration(frame, template, function(err, thought) {
+
+      			// Create Moment on Timeline
+      			console.log(moment);
+      			moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
+      				if(moment.frameType === template.type) {
+      					Frame.getPopulated2(populatedMoment.frame, function(err, populatedFrame) {
+      						fn(err, moment);
+      					});
+      				}
+      			});
+            });
+		});
+	});
+}
+
+storySchema.statics.createNarration = function(frame, template, fn) {
+
+	// Create Narration
+	Narration.create({
+		frame: frame,
+		reference: template.reference || null,
+
+		text: template.text,
+
+		author: template.account
+
+	}, function(err, narration) {
+
+		// Save Narration to datastore
+		console.log('Creating Narration.');
+		if (err) { console.log('Error creating Narration: ' + narration); }
+		console.log('Created Narration: ' + narration);
+
+		// Update reference to last Narration
+		frame.last = narration;
+		if(frame.first == null) { // For new Frame, set the first Narration.
+			frame.first = narration;
+		}
+		frame.save(function(err) {
+
+			console.log("Saved updated Narration");
+			console.log(frame);
+
+			fn(null, narration);
 
 		});
 	});

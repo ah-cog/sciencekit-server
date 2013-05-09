@@ -153,6 +153,8 @@ exports.create = [
                                                 frameType = 'Motion';
                                             } else if (template.frameType === 'sketch') {
                                                 frameType = 'Sketch';
+                                            } else if (template.frameType === 'narration') {
+                                                frameType = 'Narration';
                                             }
 
                                             Moment.create({
@@ -201,6 +203,8 @@ exports.create = [
                                                 frameType = 'Motion';
                                             } else if (template.frameType === 'sketch') {
                                                 frameType = 'Sketch';
+                                            } else if (template.frameType === 'narration') {
+                                                frameType = 'Narration';
                                             }
 
                                             Moment.create({

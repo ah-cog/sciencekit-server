@@ -2,8 +2,9 @@ var mongoose = require('mongoose')
 	, Account = require('./account');
 
 var sketchSchema = new mongoose.Schema({
-	frame: { type: mongoose.Schema.Types.ObjectId, ref: 'Frame' },
-	reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Sketch' },
+	// frame: { type: mongoose.Schema.Types.ObjectId, ref: 'Frame' },
+	// reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Sketch' },
+	moment: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
 
 	imageData: { type: String },
 	imageWidth: { type: Number },

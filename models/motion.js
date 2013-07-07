@@ -2,8 +2,9 @@ var mongoose = require('mongoose')
 	, Account = require('./account');
 
 var motionSchema = new mongoose.Schema({
-	frame: { type: mongoose.Schema.Types.ObjectId, ref: 'Frame' },
-	reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Motion' },
+	// frame: { type: mongoose.Schema.Types.ObjectId, ref: 'Frame' },
+	// reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Motion' },
+	moment: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
 
 	points: [{
 		x: Number,

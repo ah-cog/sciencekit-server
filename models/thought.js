@@ -1,12 +1,13 @@
 var mongoose = require('mongoose')
-	, Account = require('./account')
-	, Frame = require('./frame');
+	, Account = require('./account');
 
 var thoughtSchema = new mongoose.Schema({
-	frame: { type: mongoose.Schema.Types.ObjectId, ref: 'Frame' },
-	reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Thought' },
+	// frame: { type: mongoose.Schema.Types.ObjectId, ref: 'Frame' },
+	// reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Thought' },
+	moment: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
 
 	text: { type: String, required: true }, // e.g., 'Thought'
+
 	date: { type: Date, default: Date.now },
 	hidden: Boolean,
 	author: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' }

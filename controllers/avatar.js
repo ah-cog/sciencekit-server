@@ -5,7 +5,7 @@ var passport = require('passport')
   , Account = require('../models/account')
   , Avatar = require('../models/avatar')
   , Moment = require('../models/moment')
-  , Story = require('../models/story');
+  , Inquiry = require('../models/inquiry');
 
 exports.read = [
     passport.authenticate('bearer', { session: false }),
@@ -57,11 +57,6 @@ exports.create = [
                 io.sockets.emit('avatar', avatar);
                 res.json(avatar);
             });
-
-            // Story.addAvatar(avatarTemplate, function(err, moment) {
-            //     io.sockets.emit('avatar', moment);
-            //     res.json(moment);
-            // });
 
         });
 

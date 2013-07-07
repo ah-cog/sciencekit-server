@@ -4,8 +4,7 @@ var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account')
 	, Thought = require('../models/thought')
-    , Perspective = require('../models/perspective')
-	, Story = require('../models/story');
+	, Inquiry = require('../models/inquiry');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
 exports.create = [
@@ -23,45 +22,12 @@ exports.create = [
             console.log(thoughtTemplate);
             console.log("Timeline = %s", thoughtTemplate.timeline);
 
-            // TODO: Verify valid JSON
-            // TODO: Verify required fields for element are present
 
-            Story.addThought(thoughtTemplate, function(err, moment) {
-                console.log("MOMENT: ");
-                console.log(moment);
-                Story.getOrCreatePerspective(moment.frame, req.user, function (err, perspective) {
-                    console.log('Created Perspective: ');
-                    console.log(perspective);
-
-                    //
-                    // Update Activity
-                    //
-                    perspective.activity = moment.frame.last;
-
-                    //
-                    // Save updated Activity
-                    //
-                    perspective.save(function(err) {
-                        if (err) throw err;
-
-                        //
-                        // Populate JSON structure to return based on element types
-                        //
-
-                        Perspective.getPopulated2(perspective, function(err, populatedPerspective) {
-                            if (populatedPerspective !== null) {
-                                // Replace the generic Frame (e.g., ThoughtFrame) with Perspective associated with the generic Frame for the current Account
-                                moment.frame = populatedPerspective;
-                            }
-
-                            io.sockets.emit('thought', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
-                            res.json(moment);
-                        });
-
-                        
-                    });
-                });
+            Inquiry.addThought(thoughtTemplate, function(err, entry) {
+                io.sockets.emit('thought', entry); // TODO: is this the wrong place?  better place?  guaranteed here?
+                res.json(entry);
             });
+            
         });
     }
 ];

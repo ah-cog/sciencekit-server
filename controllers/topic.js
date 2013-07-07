@@ -4,8 +4,7 @@ var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account')
 	, Topic = require('../models/topic')
-    , Perspective = require('../models/perspective')
-	, Story = require('../models/story');
+	, Inquiry = require('../models/inquiry');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
 exports.create = [
@@ -26,7 +25,7 @@ exports.create = [
             // TODO: Verify valid JSON
             // TODO: Verify required fields for element are present
 
-            Story.addTopic(activityTemplate, function(err, moment) {
+            Inquiry.addTopic(activityTemplate, function(err, moment) {
                 io.sockets.emit('topic', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
                 res.json(moment);
             });

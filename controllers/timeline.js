@@ -5,10 +5,10 @@ var passport = require('passport')
 	, Account = require('../models/account')
 	, Timeline = require('../models/timeline')
 	, Moment = require('../models/moment')
-	, Perspective = require('../models/perspective')
+	// , Perspective = require('../models/perspective')
 	, Photo = require('../models/photo')
 	, Thought = require('../models/thought')
-	, Story = require('../models/story')
+	, Inquiry = require('../models/inquiry')
 	, Narration = require('../models/narration');
 
 // TODO: Delete the following code when done testing... this shouldn't be public :-)
@@ -43,32 +43,12 @@ exports.read = [
 				}
 			});
 		} else {
-			console.log("Lookup up timeline for account: " + req.user.id);
-			// Lookup timeline for user
-			Moment.findOne({ frame: req.user.id, frameType: 'Account' }, function(err, moment) {
 
-				// Create timeline for account if one doesn't exist
-				if (moment === null) {
+			//
+			// Get default Timeline
+			//
 
-					// Create timeline for account
-					Story.createTimelineByActivity(req.user, function(err, timeline) {
-
-						Moment.findOne({ frame: req.user.id, frameType: 'Account' }, function(err, moment) {
-							console.log('Found timeline frame:' + moment.id);
-							conditions['moment'] = moment.id;
-
-							getTimeline();
-						});
-					});
-
-				} else {
-
-					console.log('Found Moment:' + moment.id);
-					conditions['moment'] = moment.id;
-
-					getTimeline();
-				}
-			});
+			getTimeline();
 		}
 
 		//
@@ -78,7 +58,11 @@ exports.read = [
 			console.log("Timeline.find() conditions:");
 			console.log(conditions);
 
-			Timeline.findOne(conditions, function(err, timeline) {
+			// Timeline.findOne(conditions, function(err, timeline) {
+			Timeline.findOne(conditions).sort('date').exec(function(err, timeline) {
+
+				console.log(timeline);
+
 				if (err) {
 					return console.log(err);
 				} else {
@@ -95,9 +79,12 @@ exports.read = [
 					result._id = timeline._id;
 					result.moment = timeline.moment;
 
+					console.log('1');
+
 					// Get timeline elements
 					// TODO: Optimize.  There's got to be a better way! Maybe asynchronous? Maybe use sockets for streaming data back? Create "async" version of API and HTTP request-based one?
-					Moment.find({ timeline: timeline.id }).sort('date').exec(function(err, moments) {
+					Moment.find({ timeline: timeline.id }).sort('-date').exec(function(err, moments) {
+
 						if (moments !== null && moments.length > 0) {
 
 							// Populate the timeline
@@ -106,59 +93,29 @@ exports.read = [
 							moments.forEach(function (moment) {
 
 								// Populate the Moment on the Timeline
-								moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
+								// moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
+								moment.populate({ path: 'entry', model: moment.entryType }, function(err, momentPopulated) {
 
-									console.log("populatedMoment");
-									console.log(populatedMoment);
+									console.log("momentPopulated");
+									console.log(momentPopulated);
 
-									if (populatedMoment !== null && populatedMoment.frame !== null) {
+									// if (momentPopulated !== null && momentPopulated.entry !== null) {
 
-										if (moment.frameType === 'Thought' || moment.frameType === 'Photo' || moment.frameType === 'Video' || moment.frameType === 'Motion' || moment.frameType === 'Sketch' || moment.frameType === 'Narration') {
+									moment.populate({ path: 'author' }, function(err, momentPopulated) {
 
-											//
-											// Get Perspective for current Account (or create one if none exists)
-											//
+										console.log("momentPopulated");
+										console.log(momentPopulated);
 
-											Story.getOrCreatePerspective(populatedMoment.frame, req.user, function (err, perspective) {
+										if (momentPopulated !== null && momentPopulated.entry !== null) {
 
-												//
-												// Update inactive Perspective
-												//
+											count--;
 
-												//if (perspective.active === true) {
-													perspective.activity = moment.frame.last;
-													perspective.save(function(err) {
-														if (err) throw err;
+											if(count <= 0) {
 
-														// TODO: Make this "synchronous"?  So the Frame that is retreived is always the latest?
-													});
-												//}
-
-												//
-												// Populate JSON structure to return based on element types
-												//
-
-												Perspective.getPopulated2(perspective, function(err, populatedPerspective) {
-
-													if (populatedPerspective !== null) {
-														// Replace the generic Frame (e.g., ThoughtFrame) with Perspective associated with the generic Frame for the current Account
-														moment.frame = populatedPerspective;
-													}
-
-													count--;
-
-													if(count <= 0) {
-
-														// Return result
-														result.moments = moments;
-														res.json(result);
-													}
-												});
-											});
-
-										//
-										// The Material is not one of the expected Materials
-										//
+												// Return result
+												result.moments = moments;
+												res.json(result);
+											}
 
 										} else {
 											count--;
@@ -169,20 +126,7 @@ exports.read = [
 												res.json(result);
 											}
 										}
-
-									//
-									// The Moment has no Frame
-									//
-
-									} else {
-										count--;
-										if(count <= 0) {
-
-											// Return result
-											result.moments = moments;
-											res.json(result);
-										}
-									}
+									});
 								});
 							});
 

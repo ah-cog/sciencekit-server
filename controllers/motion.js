@@ -3,11 +3,9 @@
 var passport = require('passport')
   , socketio = require('socket.io')
   , Account = require('../models/account')
-  , VideoFrame = require('../models/frame')
   , Motion = require('../models/motion')
   , Moment = require('../models/moment')
-  , Perspective = require('../models/perspective')
-  , Story = require('../models/story');
+  , Inquiry = require('../models/inquiry');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
 exports.create = [
@@ -43,11 +41,11 @@ exports.create = [
             // console.log("videoUri = " + activityTemplate.uri);
             console.log(activityTemplate);
 
-            Story.addMotion(activityTemplate, function(err, moment) {
+            Inquiry.addMotion(activityTemplate, function(err, moment) {
                 // io.sockets.emit('video', moment);
                 // res.json(moment);
 
-                Story.getOrCreatePerspective(moment.frame, req.user, function (err, perspective) {
+                Inquiry.getOrCreatePerspective(moment.frame, req.user, function (err, perspective) {
                     console.log('Created Perspective: ');
                     console.log(perspective);
 

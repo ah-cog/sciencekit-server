@@ -5,7 +5,7 @@ var passport = require('passport')
 	, Account = require('../models/account')
 	, Tag = require('../models/tag')
     , Moment = require('../models/moment')
-	, Story = require('../models/story')
+	, Inquiry = require('../models/inquiry')
     , Timeline = require('../models/timeline');
 
 exports.read = [
@@ -16,13 +16,14 @@ exports.read = [
         //var activityType = req.params.activityType;
 
         // Get Frame ID
-        var frameId = req.query.frameId;
+        var entryId = req.query.entryId;
         //var frameType = activityType.charAt(0).toUpperCase() + activityType.slice(1) + 'Frame';
-        console.log('Getting tags for frame ' + frameId);
+        console.log('Getting Tags for Entry ' + entryId);
 
-        if (frameId) {
+        if (entryId) {
 
-            Tag.find({ frame: frameId }, function (err, tags) {
+            //Tag.find({ entry: entryId }, function (err, tags) {
+            Tag.find({ entry: entryId }).sort('text').exec(function(err, tags) {
                 if (err) throw err;
 
                 console.log('Got tag count: ' + tags.length);
@@ -32,19 +33,22 @@ exports.read = [
                 var tagCount = tags.length;
                 if (tagCount > 0) {
 
-                    tags.forEach(function (tag) {
+                    res.json(tags);
 
-                        getTagTimeline(tag.text, function(err, timeline) {
-                            var tagResult = {};
-                            tagResult.timeline = timeline;
-                            tagResult.tag = tag;
-                            result.push(tagResult);
-                            tagCount--;
-                            if(tagCount <= 0) {
-                                res.json(result);
-                            }
-                        });
-                    });
+                    // tags.forEach(function (tag) {
+
+                    //     // getTagTimeline(tag.text, function(err, timeline) {
+                    //         // var tagResult = {};
+                    //         // tagResult.timeline = timeline;
+                    //         // tagResult.tag = tag;
+                    //         // result.push(tagResult);
+                    //         result.push(tag.text);
+                    //         tagCount--;
+                    //         if(tagCount <= 0) {
+                    //             res.json(result);
+                    //         }
+                    //     // });
+                    // });
 
                 } else {
                     res.json(result);
@@ -79,7 +83,7 @@ exports.create = [
             // Check if Tag with specified label exists for the Material
             //
 
-            Tag.findOne({ frame: template.frame, text: template.text }, function (err, existingTag) {
+            Tag.findOne({ entry: template.entry, text: template.text }, function (err, existingTag) {
                 if (err) throw err;
 
                 console.log('Tag:');
@@ -96,138 +100,17 @@ exports.create = [
                     //
 
                     Tag.create({
-                        frame: template.frame,
-                        //frameType: 
-                        text: template.text,
-                        account: account
+                        account: account,
+                        entry: template.entry,
+                        text: template.text
 
                     }, function(err, tag) {
 
-                        //
-                        // Get all Tags with the specified label
-                        //
+                        if (err) throw err;
 
-                        Tag.find({ text: template.text }, function(err, tags) {
-                            if (err) throw err;
+                        io.sockets.emit('tag', tag);
+                        res.json(tag);
 
-                            if (tags.length === 0) {
-                                // TODO: Handle this case.  There should be at least one, since one was just made.  Important to handle this, nonetheless.
-                            } else {
-                                console.log("Found " + tags.length + " Tags with text.");
-                                var tagsWithLabel = [];
-                                var tagCount = tags.length;
-                                for (var i = 0; i < tagCount; i++) {
-                                    tagsWithLabel.push(tags[i]._id);
-                                }
-                                console.log("tagsWithLabel.length = " + tagsWithLabel.length);
-                                console.log(tagsWithLabel);
-
-                                //
-                                // Get Moments for the found Tags.  These will be used to find an existing Timeline for the textual tag.
-                                //
-                                Moment.find({}).where('frame').in(tagsWithLabel).exec(function (err, moments) {
-                                    if (err) throw err;
-
-                                    console.log("Moments found for Tag (#): " + moments.length);
-
-                                    if (moments.length === 0) {
-
-                                        //
-                                        // Create Timeline and parent Moment for Tag
-                                        //
-
-                                        Story.createTimelineByActivity(tag, function(err, timeline) {
-
-                                            //
-                                            // Create a Moment for specified Material (e.g., ThoughtFrame) on the Tag's Timeline
-                                            //
-
-                                            var frameType = null;
-                                            if (template.frameType === 'video') {
-                                                frameType = 'Video';
-                                            } else if (template.frameType === 'thought') {
-                                                frameType = 'Thought';
-                                            } else if (template.frameType === 'photo') {
-                                                frameType = 'Photo';
-                                            } else if (template.frameType === 'motion') {
-                                                frameType = 'Motion';
-                                            } else if (template.frameType === 'sketch') {
-                                                frameType = 'Sketch';
-                                            } else if (template.frameType === 'narration') {
-                                                frameType = 'Narration';
-                                            }
-
-                                            Moment.create({
-                                                timeline: timeline,
-                                                frame: template.frame,
-                                                frameType: frameType
-                                            }, function (err, moment) {
-                                                if (err) throw err;
-
-                                                // TODO: Move this outside of this scope (up one?) to make more asynchronous
-                                                res.json(timeline);
-                                            });
-                                        });
-
-                                    } else {
-
-                                        //
-                                        // Find existing Timeline.
-                                        //
-
-                                        var momentsForTags = [];
-                                        var momentCount = moments.length;
-                                        for (var i = 0; i < momentCount; i++) {
-                                            momentsForTags.push(moments[i]._id);
-                                        }
-                                        console.log("momentsForTags.length = " + momentsForTags.length);
-                                        console.log(momentsForTags);
-
-                                        Timeline.findOne({}).where('moment').in(momentsForTags).exec(function (err, timeline) {
-                                            if (err) throw err;
-
-                                            console.log("timeline = " + timeline);
-
-                                            //
-                                            // Create a Moment for specified Material (e.g., ThoughtFrame) on the Tag's Timeline
-                                            //
-
-                                            var frameType = null;
-                                            if (template.frameType === 'video') {
-                                                frameType = 'Video';
-                                            } else if (template.frameType === 'thought') {
-                                                frameType = 'Thought';
-                                            } else if (template.frameType === 'photo') {
-                                                frameType = 'Photo';
-                                            } else if (template.frameType === 'motion') {
-                                                frameType = 'Motion';
-                                            } else if (template.frameType === 'sketch') {
-                                                frameType = 'Sketch';
-                                            } else if (template.frameType === 'narration') {
-                                                frameType = 'Narration';
-                                            }
-
-                                            Moment.create({
-                                                timeline: timeline,
-                                                frame: template.frame,
-                                                frameType: frameType
-                                            }, function (err, moment) {
-                                                if (err) throw err;
-
-                                                // TODO: Move this outside of this scope (up one?) to make more asynchronous
-                                                io.sockets.emit('tag', { timeline: timeline, tag: tag }); // TODO: is this the wrong place?  better place?  guaranteed here?
-                                                res.json(timeline);
-                                            });
-
-                                            //res.json(activityType + ', ' + template);
-                                            // io.sockets.emit('tag', { timeline: timeline, tag: tag }); // TODO: is this the wrong place?  better place?  guaranteed here?
-                                            // res.json(timeline);
-                                        });
-
-                                    }
-                                });
-                            }
-                        });
                     });
                 } else {
 
@@ -240,10 +123,10 @@ exports.create = [
 
                     console.log('Tag already exists!');
 
-                    getTagTimeline(template.text, function(err, timeline) {
-                        io.sockets.emit('tag', { timeline: timeline, tag: existingTag });
-                        res.json(timeline);
-                    });
+                    // getTagTimeline(template.text, function(err, timeline) {
+                    io.sockets.emit('tag', existingTag);
+                    res.json(existingTag);
+                    // });
                 }
             });
         });

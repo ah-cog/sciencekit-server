@@ -19,8 +19,9 @@ var express  = require('express')
 var AccessToken = require('./models/accesstoken')
   , Account = require('./models/account')
   , Client = require('./models/client')
-  , Thought = require('./models/thought') // a crumb is an atom, it's part of a story
-  , Photo = require('./models/photo');
+  , Thought = require('./models/thought')
+  , Photo = require('./models/photo')
+  , Timeline = require('./models/timeline');
 
 
 
@@ -56,6 +57,32 @@ db.on('connected', function callback() {
 // Emitted after getting disconnected from the db.
 db.on('disconnected', function callback() {
     console.log('Mongoose: disconnected');
+});
+
+
+
+
+//
+// Initialize database
+//
+
+// Create Timeline
+Timeline.find({ hidden: false }).sort('-date').exec(function(err, timelines) {
+    if (timelines.length <= 0) {
+
+        Timeline.create({
+
+        }, function (err, timeline) {
+
+            // Check if error saving Timeline
+            if (err) { console.log('Error creating new Timeline.'); }
+            console.log('Created new Timeline.');
+
+            // Callback
+            // fn(null, timeline);
+        });
+
+    }
 });
 
 
@@ -255,7 +282,7 @@ app.all('/api/*', function(req, res, next) {
 app.get('/api/status', function(req, res, next) {
     res.json({
         server: 'sciencekit',
-        version: '0.1'
+        version: '0.2'
     });
 });
 
@@ -271,11 +298,13 @@ app.get('/api/thought',  controllers.thought.read);
 app.post('/api/thought',  controllers.thought.create);
 app.put('/api/thought',  controllers.thought.update);
 
+app.post('/api/question',  controllers.Question.create);
+
 app.post('/api/:activityType/tag',  controllers.Tag.create);
 app.get('/api/tag',  controllers.Tag.read);
 
-// app.post('/api/bump',  controllers.Bump.create);
-// app.get('/api/bump',  controllers.Bump.read);
+app.post('/api/:activityType/bump',  controllers.Bump.create);
+app.get('/api/bump',  controllers.Bump.read);
 
 app.post('/api/topic', controllers.Topic.create);
 app.put('/api/topic', controllers.Topic.update);

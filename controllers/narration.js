@@ -4,8 +4,7 @@ var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account')
 	, Narration = require('../models/narration')
-    , Perspective = require('../models/perspective')
-	, Story = require('../models/story');
+	, Inquiry = require('../models/inquiry');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
 exports.create = [
@@ -26,10 +25,10 @@ exports.create = [
             // TODO: Verify valid JSON
             // TODO: Verify required fields for element are present
 
-            Story.addNarration(template, function(err, moment) {
+            Inquiry.addNarration(template, function(err, moment) {
                 console.log("MOMENT: ");
                 console.log(moment);
-                Story.getOrCreatePerspective(moment.frame, req.user, function (err, perspective) {
+                Inquiry.getOrCreatePerspective(moment.frame, req.user, function (err, perspective) {
                     console.log('Created Perspective: ');
                     console.log(perspective);
 

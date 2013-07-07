@@ -1,10 +1,10 @@
 var mongoose = require('mongoose')
-	, Account = require('./account')
-	, Frame = require('./frame');
+	, Account = require('./account');
 
 var narrationSchema = new mongoose.Schema({
-	frame: { type: mongoose.Schema.Types.ObjectId, ref: 'Frame' },
-	reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Narration' },
+	// frame: { type: mongoose.Schema.Types.ObjectId, ref: 'Frame' },
+	// reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Narration' },
+	moment: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
 
 	text: { type: String, required: true }, // e.g., 'Narration'
 

@@ -5,9 +5,7 @@ var passport = require('passport')
   , Account = require('../models/account')
   , Photo = require('../models/photo')
   , Moment = require('../models/moment')
-  , Frame = require('../models/frame')
-  , Perspective = require('../models/perspective')
-  , Story = require('../models/story');
+  , Inquiry = require('../models/inquiry');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
 exports.create = [
@@ -40,35 +38,9 @@ exports.create = [
       console.log("photoUri = " + photoTemplate.uri);
       console.log(photoTemplate);
 
-      Story.addPhoto(photoTemplate, function(err, moment) {
-        // io.sockets.emit('photo', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
-        // res.json(moment);
-
-        Story.getOrCreatePerspective(moment.frame, req.user, function (err, perspective) {
-            console.log('Created Perspective: ');
-            console.log(perspective);
-
-            perspective.activity = moment.frame.last;
-            perspective.save(function(err) {
-                //
-                // Populate JSON structure to return based on element types
-                //
-
-                Perspective.getPopulated2(perspective, function(err, populatedPerspective) {
-                    if (err) throw err;
-
-                    if (populatedPerspective !== null) {
-                        // Replace the generic Frame (e.g., Thought) with FramePerspective associated with the generic Frame for the current Account
-                        moment.frame = populatedPerspective;
-                    }
-
-                    io.sockets.emit('photo', moment); // TODO: is this the wrong place?  better place?  guaranteed here?
-                    res.json(moment);
-                });
-
-                
-            });
-        });
+      Inquiry.addPhoto(photoTemplate, function(err, entry) {
+        io.sockets.emit('photo', entry); // TODO: is this the wrong place?  better place?  guaranteed here?
+        res.json(entry);
       });
 
     });

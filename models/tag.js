@@ -2,14 +2,13 @@ var mongoose = require('mongoose')
 	, Account = require('./account');
 
 var tagSchema = new mongoose.Schema({
-	frame: { type: mongoose.Schema.Types.ObjectId },
-	frameType: { type: String }, // e.g., 'ThoughtFrame'
+	entry: { type: mongoose.Schema.Types.ObjectId },
 
 	text: { type: String, required: true },
 	
-	date: { type: Date, default: Date.now },
 	hidden: Boolean,
-	account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' }
+	account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' },
+	date: { type: Date, default: Date.now }
 });
 
 // Mongoose by default produces a collection name by passing the model name 

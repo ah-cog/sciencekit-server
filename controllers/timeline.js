@@ -5,11 +5,15 @@ var passport = require('passport')
 	, Account = require('../models/account')
 	, Timeline = require('../models/timeline')
 	, Moment = require('../models/moment')
-	// , Perspective = require('../models/perspective')
 	, Photo = require('../models/photo')
 	, Thought = require('../models/thought')
-	, Inquiry = require('../models/inquiry')
-	, Narration = require('../models/narration');
+	, Bump = require('../models/bump')
+	, Collaboration = require('../models/collaboration')
+	, Identity = require('../models/identity')
+	, Question = require('../models/question')
+	, Observation = require('../models/observation')
+	, Sequence = require('../models/sequence')
+	, Inquiry = require('../models/inquiry');
 
 // TODO: Delete the following code when done testing... this shouldn't be public :-)
 exports.read = [
@@ -79,55 +83,112 @@ exports.read = [
 					result._id = timeline._id;
 					result.moment = timeline.moment;
 
-					console.log('1');
-
 					// Get timeline elements
 					// TODO: Optimize.  There's got to be a better way! Maybe asynchronous? Maybe use sockets for streaming data back? Create "async" version of API and HTTP request-based one?
-					Moment.find({ timeline: timeline.id }).sort('-date').exec(function(err, moments) {
+					Moment.find({ timeline: timeline.id }).sort('date').exec(function(err, moments) {
 
 						if (moments !== null && moments.length > 0) {
 
 							// Populate the timeline
+							var resultEntries = [];
 							var count = moments.length; // Hacky solution used to force synchronous operation. Optimize!
 							console.log(count);
-							moments.forEach(function (moment) {
+							moments.forEach(function (moment, momentIndex, momentArray) {
 
-								// Populate the Moment on the Timeline
-								// moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
-								moment.populate({ path: 'entry', model: moment.entryType }, function(err, momentPopulated) {
+								// Get Questions (if any) for Entry
 
-									console.log("momentPopulated");
-									console.log(momentPopulated);
+								Question.find({ parent: moment._id }).sort('-date').exec(function(err, questions) {
+									Observation.find({ parent: moment._id }).sort('-date').exec(function(err, observations) {
+										Sequence.find({ parent: moment._id }).sort('-date').exec(function(err, sequences) {
+											Bump.find({ entry: moment._id }).sort('-date').exec(function(err, bumps) {
+												Collaboration.find({ entry: moment._id }).sort('-date').exec(function(err, collaborations) {
+													// Identity.find({ entry: moment._id }).sort('-date').exec(function(err, bumps) {
 
-									// if (momentPopulated !== null && momentPopulated.entry !== null) {
 
-									moment.populate({ path: 'author' }, function(err, momentPopulated) {
+														// Populate the Moment on the Timeline
+														// moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
+														moment.populate({ path: 'entry', model: moment.entryType }, function(err, momentPopulated) {
 
-										console.log("momentPopulated");
-										console.log(momentPopulated);
+															console.log("momentPopulated");
+															console.log(momentPopulated);
 
-										if (momentPopulated !== null && momentPopulated.entry !== null) {
+															// if (momentPopulated !== null && momentPopulated.entry !== null) {
 
-											count--;
+															moment.populate({ path: 'author' }, function(err, momentPopulated) {
 
-											if(count <= 0) {
+																console.log("momentPopulated");
+																console.log(momentPopulated);
 
-												// Return result
-												result.moments = moments;
-												res.json(result);
-											}
+																if (momentPopulated !== null && momentPopulated.entry !== null) {
 
-										} else {
-											count--;
-											if(count <= 0) {
+																	var entryObject = momentPopulated.toObject();
 
-												// Return result
-												result.moments = moments;
-												res.json(result);
-											}
-										}
+																	// Add to results
+																	if (questions !== null && questions.length > 0) {
+																		console.log("HAS QUESTIONS: " + questions.length);
+																		entryObject.questions = questions;
+																	}
+
+																	// Add to results
+																	if (observations !== null && observations.length > 0) {
+																		console.log("HAS OBSERVATIONS: " + observations.length);
+																		entryObject.observations = observations;
+																	}
+
+																	// Add to results
+																	if (sequences !== null && sequences.length > 0) {
+																		console.log("HAS SEQUENCES: " + sequences.length);
+																		entryObject.sequences = sequences;
+																	}
+
+																	// Add to results
+																	if (bumps !== null && bumps.length > 0) {
+																		console.log("HAS SEQUENCES: " + bumps.length);
+																		entryObject.bumps = bumps;
+																	}
+
+																	// Add Collaboration to results
+																	if (collaborations !== null && collaborations.length > 0) {
+																		console.log("HAS COLLABORATIONS: " + collaborations.length);
+																		entryObject.collaborations = collaborations;
+																	}
+
+																	// resultEntries.push(entryObject);
+																	resultEntries[momentIndex] = entryObject;
+
+																	count--;
+
+																	if(count <= 0) {
+
+																		// Return result
+																		// result.moments = moments;
+																		result.moments = resultEntries;
+																		res.json(result);
+																	}
+
+																} else {
+																	count--;
+																	if(count <= 0) {
+
+																		// Return result
+																		result.moments = resultEntries;
+																		// result.moments = moments;
+																		res.json(result);
+																	}
+																}
+															});
+														});
+
+
+
+													// });
+												});
+											});
+										});
 									});
 								});
+
+								
 							});
 
 						} else {

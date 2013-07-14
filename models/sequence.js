@@ -2,10 +2,10 @@ var mongoose = require('mongoose')
 	, Account = require('./account');
 
 var sequenceSchema = new mongoose.Schema({
-	moment: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
+	parent: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
 
 	steps: [{
-		text: String
+		step: String
 	}],
 
 	date: { type: Date, default: Date.now },

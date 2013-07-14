@@ -294,11 +294,24 @@ app.get('/api/account/avatar',   controllers.Avatar.read);
 
 app.get('/api/timeline',  controllers.timeline.read);
 
+app.get('/api/story',  controllers.Story.read);
+app.post('/api/story',  controllers.Story.create);
+
 app.get('/api/thought',  controllers.thought.read);
 app.post('/api/thought',  controllers.thought.create);
 app.put('/api/thought',  controllers.thought.update);
 
+app.post('/api/text',  controllers.Text.create);
+
 app.post('/api/question',  controllers.Question.create);
+
+app.post('/api/observation',  controllers.Observation.create);
+
+app.post('/api/sequence',  controllers.Sequence.create);
+
+app.post('/api/collaboration',  controllers.Collaboration.create);
+
+app.post('/api/identity',  controllers.Identity.create);
 
 app.post('/api/:activityType/tag',  controllers.Tag.create);
 app.get('/api/tag',  controllers.Tag.read);
@@ -314,11 +327,7 @@ app.get('/api/photo/:id', controllers.Photo.read);
 
 app.post('/api/video',    controllers.Video.create);
 
-app.post('/api/motion',    controllers.Motion.create);
-
 app.post('/api/sketch',    controllers.Sketch.create);
-
-app.post('/api/narration',    controllers.Narration.create);
 
 
 

@@ -2,7 +2,7 @@ var mongoose = require('mongoose')
 	, Account = require('./account');
 
 var questionSchema = new mongoose.Schema({
-	moment: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
+	parent: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
 
 	question: { type: String, required: true },
 	

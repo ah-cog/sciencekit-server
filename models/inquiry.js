@@ -1,16 +1,19 @@
 var mongoose = require('mongoose')
 	, Timeline = require('./timeline')
+	, Story = require('./story')
+	, Page = require('./page')
 	, Moment = require('./moment')
+	, Text = require('./text')
 	, Thought = require('./thought')
 	, Question = require('./question')
 	, Observation = require('./observation')
 	, Sequence = require('./sequence')
 	, Photo = require('./photo')
+	, Collaboration = require('./collaboration')
+	, Identity = require('./identity')
 	, Video = require('./video')
-	, Motion = require('./motion')
 	, Sketch = require('./sketch')
-	, Topic = require('./topic')
-	, Narration = require('./narration');
+	, Topic = require('./topic');
 
 var inquirySchema = new mongoose.Schema({
 	timeline: { type: mongoose.Schema.ObjectId, ref: 'Timeline', required: true },
@@ -259,6 +262,66 @@ inquirySchema.statics.getOrCreatePerspective = function(frame, account, fn) {
 	});
 }
 
+// Add Text to Inquiry
+inquirySchema.statics.addText = function(entryTemplate, fn) {
+
+	//
+	// Make sure all required properties are present
+	//
+
+	entryTemplate.type = 'Text';
+
+	// 'timeline'
+	if (!entryTemplate.hasOwnProperty('timeline')) {
+		// Get oldest Timeline
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
+			if (err) { throw err; }
+
+			entryTemplate.timeline = timeline._id;
+		});
+	}
+
+	// if (!entryTemplate.hasOwnProperty('text')) {
+	// 	console.log('Cannot add Text.  Required properties are missing.');
+	// 	fn('Cannot add Text.  Required properties are missing.');
+	// }
+
+	//
+	// Create Text
+	//
+
+	Text.create({
+		author: entryTemplate.account,
+		// text: entryTemplate.text
+
+	}, function(err, entry) {
+		if (err) throw err;
+
+		//
+		// Create Entry
+		//
+
+		Moment.create({
+			timeline: entryTemplate.timeline,
+			author: entryTemplate.account,
+			entry: entry,
+			entryType: entry.constructor.modelName,
+
+		}, function(err, entry) {
+			if (err) throw err;
+
+			console.log("Created and saved Entry:");
+			console.log(entry);
+
+			entry.populate({ path: 'entry', model: entry.entryType }, function(err, entryPopulated) {
+				entryPopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+					fn(null, entryPopulated);
+				});
+			});
+		});
+	});
+}
+
 // Add Thought to Inquiry
 inquirySchema.statics.addThought = function(entryTemplate, fn) {
 
@@ -271,7 +334,7 @@ inquirySchema.statics.addThought = function(entryTemplate, fn) {
 	// 'timeline'
 	if (!entryTemplate.hasOwnProperty('timeline')) {
 		// Get oldest Timeline
-		Timeline.findOne({}).sort('-date').exec(function(err, timeline) {
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
 			if (err) { throw err; }
 
 			entryTemplate.timeline = timeline._id;
@@ -321,6 +384,138 @@ inquirySchema.statics.addThought = function(entryTemplate, fn) {
 
 
 
+// Add Collaboration to Inquiry
+inquirySchema.statics.addCollaboration = function(entryTemplate, fn) {
+
+	//
+	// Make sure all required properties are present
+	//
+
+	entryTemplate.type = 'Collaboration';
+
+	// 'timeline'
+	if (!entryTemplate.hasOwnProperty('timeline')) {
+		// Get oldest Timeline
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
+			if (err) { throw err; }
+
+			entryTemplate.timeline = timeline._id;
+		});
+	}
+
+	if (!entryTemplate.hasOwnProperty('parent')) {
+		console.log('Cannot add Collaboration.  Required properties are missing.');
+		fn('Cannot add Collaboration.  Required properties are missing.');
+	}
+
+	//
+	// Create Collaboration
+	//
+
+	Collaboration.create({
+		author: entryTemplate.account,
+		entry: entryTemplate.parent,
+		authors: entryTemplate.authors
+		// author
+		// entry
+		// authors
+
+	}, function(err, entry) {
+		if (err) throw err;
+
+		//
+		// Create Entry
+		//
+
+		fn(null, entry);
+
+		// Moment.create({
+		// 	timeline: entryTemplate.timeline,
+		// 	author: entryTemplate.account,
+		// 	entry: entry,
+		// 	entryType: entry.constructor.modelName,
+
+		// }, function(err, entry) {
+		// 	if (err) throw err;
+
+		// 	console.log("Created and saved Entry:");
+		// 	console.log(entry);
+
+		// 	entry.populate({ path: 'entry', model: entry.entryType }, function(err, entryPopulated) {
+		// 		entryPopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+		// 			fn(null, entryPopulated);
+		// 		});
+		// 	});
+		// });
+	});
+}
+
+// Question
+
+inquirySchema.statics.addIdentity = function(entryTemplate, fn) {
+
+	//
+	// Make sure all required properties are present
+	//
+
+	entryTemplate.type = 'Identity';
+
+	// 'timeline'
+	if (!entryTemplate.hasOwnProperty('timeline')) {
+		// Get newest Timeline
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
+			if (err) { throw err; }
+
+			entryTemplate.timeline = timeline._id;
+		});
+	}
+
+	if (!entryTemplate.hasOwnProperty('identity')) {
+		console.log('Cannot add Identity.  Required properties are missing.');
+		fn('Cannot add Identity.  Required properties are missing.');
+	}
+
+	//
+	// Create Thought
+	//
+
+	Identity.create({
+		author: entryTemplate.account,
+		parent: entryTemplate.parent,
+		identity: entryTemplate.identity
+
+	}, function(err, entry) {
+		if (err) throw err;
+
+		fn(null, entry);
+
+		//
+		// Create Entry
+		//
+
+		// Moment.create({
+		// 	timeline: entryTemplate.timeline,
+		// 	author: entryTemplate.account,
+		// 	entry: entry,
+		// 	entryType: entry.constructor.modelName,
+
+		// }, function(err, entry) {
+		// 	if (err) throw err;
+
+		// 	console.log("Created and saved Entry:");
+		// 	console.log(entry);
+
+		// 	entry.populate({ path: 'entry', model: entry.entryType }, function(err, entryPopulated) {
+		// 		entryPopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+		// 			fn(null, entryPopulated);
+		// 		});
+		// 	});
+		// });
+	});
+}
+
+
+
 // Question
 
 inquirySchema.statics.addQuestion = function(entryTemplate, fn) {
@@ -334,14 +529,14 @@ inquirySchema.statics.addQuestion = function(entryTemplate, fn) {
 	// 'timeline'
 	if (!entryTemplate.hasOwnProperty('timeline')) {
 		// Get newest Timeline
-		Timeline.findOne({}).sort('-date').exec(function(err, timeline) {
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
 			if (err) { throw err; }
 
 			entryTemplate.timeline = timeline._id;
 		});
 	}
 
-	if (!entryTemplate.hasOwnProperty('question')) {
+	if (!entryTemplate.hasOwnProperty('text')) {
 		console.log('Cannot add Question.  Required properties are missing.');
 		fn('Cannot add Question.  Required properties are missing.');
 	}
@@ -352,7 +547,139 @@ inquirySchema.statics.addQuestion = function(entryTemplate, fn) {
 
 	Question.create({
 		author: entryTemplate.account,
-		question: entryTemplate.question
+		parent: entryTemplate.parent,
+		question: entryTemplate.text
+
+	}, function(err, entry) {
+		if (err) throw err;
+
+		//
+		// Create Entry
+		//
+
+		Moment.create({
+			timeline: entryTemplate.timeline,
+			author: entryTemplate.account,
+			entry: entry,
+			entryType: entry.constructor.modelName,
+
+		}, function(err, entry) {
+			if (err) throw err;
+
+			console.log("Created and saved Entry:");
+			console.log(entry);
+
+			entry.populate({ path: 'entry', model: entry.entryType }, function(err, entryPopulated) {
+				entryPopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+					fn(null, entryPopulated);
+				});
+			});
+		});
+	});
+}
+
+
+
+
+// Question
+
+inquirySchema.statics.addObservation = function(entryTemplate, fn) {
+
+	//
+	// Make sure all required properties are present
+	//
+
+	entryTemplate.type = 'Observation';
+
+	// 'timeline'
+	if (!entryTemplate.hasOwnProperty('timeline')) {
+		// Get newest Timeline
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
+			if (err) { throw err; }
+
+			entryTemplate.timeline = timeline._id;
+		});
+	}
+
+	if (!entryTemplate.hasOwnProperty('cause') || !entryTemplate.hasOwnProperty('effect')) {
+		console.log('Cannot add Observation.  Required properties are missing.');
+		fn('Cannot add Observation.  Required properties are missing.');
+	}
+
+	//
+	// Create Thought
+	//
+
+	Observation.create({
+		author: entryTemplate.account,
+		parent: entryTemplate.parent,
+		effect: entryTemplate.effect,
+		cause: entryTemplate.cause
+
+	}, function(err, entry) {
+		if (err) throw err;
+
+		//
+		// Create Entry
+		//
+
+		Moment.create({
+			timeline: entryTemplate.timeline,
+			author: entryTemplate.account,
+			entry: entry,
+			entryType: entry.constructor.modelName,
+
+		}, function(err, entry) {
+			if (err) throw err;
+
+			console.log("Created and saved Entry:");
+			console.log(entry);
+
+			entry.populate({ path: 'entry', model: entry.entryType }, function(err, entryPopulated) {
+				entryPopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+					fn(null, entryPopulated);
+				});
+			});
+		});
+	});
+}
+
+
+
+
+// Question
+
+inquirySchema.statics.addSequence = function(entryTemplate, fn) {
+
+	//
+	// Make sure all required properties are present
+	//
+
+	entryTemplate.type = 'Sequence';
+
+	// 'timeline'
+	if (!entryTemplate.hasOwnProperty('timeline')) {
+		// Get newest Timeline
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
+			if (err) { throw err; }
+
+			entryTemplate.timeline = timeline._id;
+		});
+	}
+
+	if (!entryTemplate.hasOwnProperty('steps')) {
+		console.log('Cannot add Sequence.  Required properties are missing.');
+		fn('Cannot add Sequence.  Required properties are missing.');
+	}
+
+	//
+	// Create Thought
+	//
+
+	Sequence.create({
+		author: entryTemplate.account,
+		parent: entryTemplate.parent,
+		steps: entryTemplate.steps
 
 	}, function(err, entry) {
 		if (err) throw err;
@@ -399,7 +726,7 @@ inquirySchema.statics.addPhoto = function(entryTemplate, fn) {
 	// 'timeline'
 	if (!entryTemplate.hasOwnProperty('timeline')) {
 		// Get oldest Timeline
-		Timeline.findOne({}).sort('-date').exec(function(err, timeline) {
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
 			if (err) { throw err; }
 
 			entryTemplate.timeline = timeline._id;
@@ -459,7 +786,7 @@ inquirySchema.statics.addVideo = function(entryTemplate, fn) {
 	// 'timeline'
 	if (!entryTemplate.hasOwnProperty('timeline')) {
 		// Get oldest Timeline
-		Timeline.findOne({}).sort('-date').exec(function(err, timeline) {
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
 			if (err) { throw err; }
 
 			entryTemplate.timeline = timeline._id;
@@ -596,7 +923,7 @@ inquirySchema.statics.addSketch = function(entryTemplate, fn) {
 	// 'timeline'
 	if (!entryTemplate.hasOwnProperty('timeline')) {
 		// Get oldest Timeline
-		Timeline.findOne({}).sort('-date').exec(function(err, timeline) {
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
 			if (err) { throw err; }
 
 			entryTemplate.timeline = timeline._id;
@@ -639,6 +966,86 @@ inquirySchema.statics.addSketch = function(entryTemplate, fn) {
 			});
 		});
 	});
+}
+
+// Story
+
+// Add Story for Inquiry
+inquirySchema.statics.addStory = function(storyTemplate, fn) {
+
+	//
+	// Make sure all required properties are present
+	//
+
+	storyTemplate.type = 'Story';
+
+	// Make sure all required properties are present
+	if (!storyTemplate.hasOwnProperty('title')) {
+		console.log('Cannot add Story.  Required properties are missing.');
+		fn('Cannot add Story.  Required properties are missing.');
+	}
+
+	// 'timeline'
+	if (!storyTemplate.hasOwnProperty('timeline')) {
+		// Get oldest Timeline
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
+			if (err) { throw err; }
+
+			console.log(timeline);
+
+			storyTemplate.timeline = timeline._id;
+
+
+			// if (!storyTemplate.hasOwnProperty('text')) {
+			// 	console.log('Cannot add thought.  Required properties are missing.');
+			// 	fn('Cannot add thought.  Required properties are missing.');
+			// }
+
+			//
+			// Create Story
+			//
+
+			Story.create({
+				timeline: storyTemplate.timeline,
+				title: storyTemplate.title,
+				author: storyTemplate.account
+
+			}, function(err, story) {
+				if (err) throw err;
+
+				//
+				// Create Pages for each Entry
+				//
+
+				for (entry in storyTemplate.entries) {
+					console.log(storyTemplate.entries[entry]);
+
+					//
+					// Create Page
+					//
+
+					Page.create({
+						story: story,
+						author: storyTemplate.account,
+						entry: storyTemplate.entries[entry].entry
+
+					}, function(err, page) {
+						if (err) throw err;
+
+						console.log("Created and saved Page:");
+						console.log(page);
+
+						page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
+							pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+								fn(null, pagePopulated);
+							});
+						});
+					});
+				}
+				
+			});
+		});
+	}
 }
 
 module.exports = mongoose.model('Inquiry', inquirySchema); // Compile schema to a model

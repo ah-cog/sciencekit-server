@@ -7,6 +7,8 @@ var momentSchema = new mongoose.Schema({
     // frame: { type: mongoose.Schema.Types.ObjectId, required: true }, // i.e., the referenced object itself
     // frameType: { type: String, required: true }, // i.e., the "ref" value, e.g., 'ThoughtFrame'
 
+    parent: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
+
     entry: { type: mongoose.Schema.Types.ObjectId }, // first Topic created for TopicFrame
     entryType: { type: 'String' }, // e.g., 'Thought' (the name of the model being framed)
 

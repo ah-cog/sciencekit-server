@@ -1,12 +1,11 @@
 var mongoose = require('mongoose')
 	, Account = require('./account');
 
-var narrationSchema = new mongoose.Schema({
-	// frame: { type: mongoose.Schema.Types.ObjectId, ref: 'Frame' },
-	// reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Narration' },
+var textSchema = new mongoose.Schema({
+	// reference: { type: mongoose.Schema.Types.ObjectId, ref: 'Thought' },
 	moment: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
 
-	text: { type: String, required: true }, // e.g., 'Narration'
+	// text: { type: String, required: false }, // e.g., 'Thought'
 
 	date: { type: Date, default: Date.now },
 	hidden: Boolean,
@@ -20,4 +19,4 @@ var narrationSchema = new mongoose.Schema({
 // var dataSchema = new Schema({..}, { collection: 'data' });
 // 
 // [Source: http://mongoosejs.com/docs/guide.html]
-module.exports = mongoose.model('Narration', narrationSchema); // Compile schema to a model
+module.exports = mongoose.model('Text', textSchema); // Compile schema to a model

@@ -17,8 +17,8 @@ exports.create = [
 
         // Get POST data
         var data     = req.body;
-        var timeline = data.timeline;
-        console.log("Sketch Timeline: %s", timeline);
+        // var timeline = data.timeline;
+        // console.log("Sketch Timeline: %s", timeline);
 
         // Get files
         //console.log(req.files);

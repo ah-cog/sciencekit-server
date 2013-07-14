@@ -57,7 +57,7 @@ exports.read = [
             });
         }
     }
-]
+];
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
 exports.create = [

@@ -3,14 +3,13 @@
 var passport = require('passport')
 	, socketio = require('socket.io')
 	, Account = require('../models/account')
-	, Sequence = require('../models/sequence')
+	, Identity = require('../models/identity')
 	, Inquiry = require('../models/inquiry');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
 exports.create = [
     passport.authenticate('bearer', { session: false }),
     function(req, res) {
-        // TODO: Make sure required parameters are present, correct
 
         console.log(req.body);
 
@@ -20,11 +19,9 @@ exports.create = [
             entryTemplate.account = account;
             console.log("Received: ");
             console.log(entryTemplate);
-            console.log("Timeline = %s", entryTemplate.timeline);
 
-
-            Inquiry.addSequence(entryTemplate, function(err, entry) {
-                io.sockets.emit('sequence', entry);
+            Inquiry.addIdentity(entryTemplate, function(err, entry) {
+                io.sockets.emit('identity', entry);
                 res.json(entry);
             });
         });

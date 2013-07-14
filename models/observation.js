@@ -2,7 +2,7 @@ var mongoose = require('mongoose')
 	, Account = require('./account');
 
 var observationSchema = new mongoose.Schema({
-	moment: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
+	parent: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
 
 	effect: { type: String, required: true },
 	cause: { type: String, required: true },

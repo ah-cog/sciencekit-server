@@ -4,6 +4,5 @@ exports.Story = require('./story');
 exports.Timeline = require('./timeline');
 exports.Moment = require('./moment');
 exports.Text = require('./text');
-exports.Thought = require('./thought');
 exports.Photo = require('./photo');
 exports.Bump = require('./bump');

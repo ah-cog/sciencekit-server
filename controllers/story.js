@@ -57,7 +57,8 @@ exports.read = [
 
                 var result = [];
 
-                Story.find({ timeline: timelineId, author: account }).sort('-date').exec(function(err, stories) {
+                //Story.find({ timeline: timelineId, author: account }).sort('-date').exec(function(err, stories) {
+                Story.find({ timeline: timelineId }).sort('-date').exec(function(err, stories) {
                     if (err) throw err;
 
                     console.log('Got Story count: ' + stories.length);
@@ -65,8 +66,7 @@ exports.read = [
 
                     stories.forEach(function (story, storyIndex) {
 
-                        var storyObject = story.toObject();
-                        storyObject.pages = [];
+                        
 
                         //var storyResult = { story: story, pages: [] };
 
@@ -92,6 +92,11 @@ exports.read = [
                         // // // Return result
                         // // result.pages = pages;
                         // // res.json(result);
+                        story.populate({ path: 'author' }, function(err, storyPopulated) {
+
+
+                            var storyObject = storyPopulated.toObject();
+                            storyObject.pages = [];
 
 
 
@@ -99,89 +104,87 @@ exports.read = [
 
 
 
+                            // TODO: Request Pages in Story and store in response
+                            Page.find({ story: story._id, author: account }).sort('date').exec(function(err, pages) {
+                                if (err) throw err;
+
+                                // Populate the timeline
+                                var pageCount = pages.length; // Hacky solution used to force synchronous operation. Optimize!
+                                console.log(pageCount);
+
+                                // Create Story object to populate and return
+                                storyObject.pages = pages;
+
+                                if (pageCount > 0) {
+                                    pages.forEach(function (page) {
+
+                                        // Populate the Entry for the Page
+                                        page.populate({ path: 'entry', model: page.entryType }, function(err, pagePopulated) {
+
+                                            // if (pagePopulated !== null && pagePopulated.entry !== null) {
+
+                                            page.populate({ path: 'author' }, function(err, pagePopulated) {
+
+                                                if (pagePopulated !== null && pagePopulated.entry !== null) {
+
+                                                    pageCount--;
+
+                                                    if(pageCount <= 0) {
+
+
+                                                        // TODO: Populate Entry for Page?
 
 
 
-                        // TODO: Request Pages in Story and store in response
-                        Page.find({ story: story._id, author: account }).sort('date').exec(function(err, pages) {
-                            if (err) throw err;
+                                                        // res.json(result); // TODO: Remove this
 
-                            // Populate the timeline
-                            var pageCount = pages.length; // Hacky solution used to force synchronous operation. Optimize!
-                            console.log(pageCount);
+                                                        //result.push(storyObject);
+                                                        result[storyIndex] = storyObject;
 
-                            // Create Story object to populate and return
-                            storyObject.pages = pages;
+                                                        storyCount--;
 
-                            if (pageCount > 0) {
-                                pages.forEach(function (page) {
+                                                        if (storyCount <= 0) {
 
-                                    // Populate the Entry for the Page
-                                    page.populate({ path: 'entry', model: page.entryType }, function(err, pagePopulated) {
+                                                            res.json(result);
 
-                                        // if (pagePopulated !== null && pagePopulated.entry !== null) {
+                                                        } else {
+                                                            // res.json(result);
+                                                        }
 
-                                        page.populate({ path: 'author' }, function(err, pagePopulated) {
-
-                                            if (pagePopulated !== null && pagePopulated.entry !== null) {
-
-                                                pageCount--;
-
-                                                if(pageCount <= 0) {
-
-
-                                                    // TODO: Populate Entry for Page?
-
-
-
-                                                    // res.json(result); // TODO: Remove this
-
-                                                    //result.push(storyObject);
-                                                    result[storyIndex] = storyObject;
-
-                                                    storyCount--;
-
-                                                    if (storyCount <= 0) {
-
-                                                        res.json(result);
-
-                                                    } else {
+                                                        // // Return result
+                                                        // result.pages = pages;
                                                         // res.json(result);
                                                     }
 
-                                                    // // Return result
-                                                    // result.pages = pages;
-                                                    // res.json(result);
-                                                }
+                                                } else {
+                                                    pageCount--;
+                                                    if(pageCount <= 0) {
 
-                                            } else {
-                                                pageCount--;
-                                                if(pageCount <= 0) {
-
-                                                    // Return result
-                                                    // result.pages = pages;
-                                                    res.json(result);
+                                                        // Return result
+                                                        // result.pages = pages;
+                                                        res.json(result);
+                                                    }
                                                 }
-                                            }
+                                            });
                                         });
                                     });
-                                });
-
-                            } else {
-                                result[storyIndex] = storyObject;
-                                // result.push(storyObject);
-
-                                storyCount--;
-
-                                if (storyCount <= 0) {
-
-                                    res.json(result);
 
                                 } else {
-                                    // res.json(result);
-                                }
-                            }
+                                    result[storyIndex] = storyObject;
+                                    // result.push(storyObject);
 
+                                    storyCount--;
+
+                                    if (storyCount <= 0) {
+
+                                        res.json(result);
+
+                                    } else {
+                                        // res.json(result);
+                                    }
+                                }
+
+                            });
                         });
 
                     });

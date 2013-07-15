@@ -19,7 +19,6 @@ var express  = require('express')
 var AccessToken = require('./models/accesstoken')
   , Account = require('./models/account')
   , Client = require('./models/client')
-  , Thought = require('./models/thought')
   , Photo = require('./models/photo')
   , Timeline = require('./models/timeline');
 
@@ -249,7 +248,7 @@ app.post('/api/client/create', function(req, res, next) {
         clientSecret: 'ssh-secret'
     });
 
-    // Save thought to datastore
+    // Save client to datastore
     client.save(function(err, client) {
         if (err) {
             console.log('Error creating client: ' + client);
@@ -289,17 +288,13 @@ app.get('/api/status', function(req, res, next) {
 // Resource Server (this is an OAuth2 term)
 // The resource server stores the protected resources (API URIs that require authentication).
 app.get('/api/account',   controllers.account.read);
-app.post('/api/account/avatar',   controllers.Avatar.create);
-app.get('/api/account/avatar',   controllers.Avatar.read);
 
 app.get('/api/timeline',  controllers.timeline.read);
 
+app.get('/api/entry/:id',  controllers.timeline.readEntry);
+
 app.get('/api/story',  controllers.Story.read);
 app.post('/api/story',  controllers.Story.create);
-
-app.get('/api/thought',  controllers.thought.read);
-app.post('/api/thought',  controllers.thought.create);
-app.put('/api/thought',  controllers.thought.update);
 
 app.post('/api/text',  controllers.Text.create);
 
@@ -318,9 +313,6 @@ app.get('/api/tag',  controllers.Tag.read);
 
 app.post('/api/:activityType/bump',  controllers.Bump.create);
 app.get('/api/bump',  controllers.Bump.read);
-
-app.post('/api/topic', controllers.Topic.create);
-app.put('/api/topic', controllers.Topic.update);
 
 app.post('/api/photo',    controllers.Photo.create);
 app.get('/api/photo/:id', controllers.Photo.read);

@@ -4,8 +4,6 @@ var mongoose = require('mongoose')
 // A "bump" is defined as a general mechanism for assignming polarity to an Artifact.
 var bumpSchema = new mongoose.Schema({
 	entry: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
-	// artifact: { type: mongoose.Schema.Types.ObjectId }, // Note: previously "frame".  This can apply to more than Frames, however, so I generalized it to "artifact".
-	// artifactType: { type: String }, // e.g., 'ThoughtFrame'
 
 	tag: { type: String, default: 'bump' }, // (i.e., the adjective) The bump label can be thought of as a category into which the bump will go (e.g., "popular").
 	degree: { type: Number, default: 1 }, // (i.e., the adverb) The bump degree is a signed magnitude representing the positive or negative weight of the bump, defaults to zero

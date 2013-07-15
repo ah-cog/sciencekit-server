@@ -82,15 +82,17 @@ exports.create = function(req, res) {
 
 					}, function(err, client) {
 
-						// Create timeline for account
-						Inquiry.createTimelineByActivity(account, function(err, timeline) {
-							if (err) {
-								console.log('Error creating timeline for new account:' + account);
-							}
+						res.redirect('/login');
 
-							console.log('Created account: ' + account);
-							res.redirect('/timeline');
-						});
+						// Create timeline for account
+						// Inquiry.createTimelineByActivity(account, function(err, timeline) {
+						// 	if (err) {
+						// 		console.log('Error creating timeline for new account:' + account);
+						// 	}
+
+						// 	console.log('Created account: ' + account);
+						// 	res.redirect('/timeline');
+						// });
 
 					});
 				});

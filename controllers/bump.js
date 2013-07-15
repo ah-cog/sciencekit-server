@@ -27,8 +27,8 @@ exports.read = [
 
                 console.log('Got Bump count: ' + bumps.length);
 
-                var tagCount = bumps.length;
-                if (tagCount > 0) {
+                var bumpCount = bumps.length;
+                if (bumpCount > 0) {
 
                     res.json(bumps);
 
@@ -66,7 +66,7 @@ exports.create = [
             // Check if Bump with specified label exists for the Material
             //
 
-            Bump.findOne({ entry: template.entry, text: template.text }, function (err, existingBump) {
+            Bump.findOne({ account: account, entry: template.entry, text: template.text }, function (err, existingBump) {
                 if (err) throw err;
 
                 console.log('Bump:');

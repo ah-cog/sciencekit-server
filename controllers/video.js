@@ -30,10 +30,10 @@ exports.create = [
             var filenameStart         = req.files.file.path.indexOf("/uploads");
             activityTemplate.file     = req.files.file;
             activityTemplate.uri      = req.files.file.path.substring(filenameStart);
-            activityTemplate.timeline = timeline;
+            // activityTemplate.timeline = timeline;
             activityTemplate.account  = account;
-            if (data.hasOwnProperty('activity'))   activityTemplate.activity   = data.activity;
-            if (data.hasOwnProperty('reference')) activityTemplate.reference = data.reference;
+            // if (data.hasOwnProperty('activity'))   activityTemplate.activity   = data.activity;
+            // if (data.hasOwnProperty('reference')) activityTemplate.reference = data.reference;
 
             console.log("videoUri = " + activityTemplate.uri);
             console.log(activityTemplate);

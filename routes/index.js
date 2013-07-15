@@ -22,13 +22,7 @@ exports.timeline = [
 	function(req, res){
 		console.log(req.user);
 
-		models.ThoughtFrame.find({}, function (err, thoughtFrames) {
-			if (err) { return done(err); }
-
-			console.log("ThoughtFrames: " + thoughtFrames);
-			res.render('timeline', { title: 'ScienceKit', user: req.user, thoughts: thoughtFrames });
-
-		});
+		res.render('timeline', { title: 'ScienceKit', user: req.user });
 	}
 ]
 
@@ -41,6 +35,14 @@ exports.loginForm = function(req, res) {
 };
 
 exports.login = passport.authenticate('local', { successReturnToOrRedirect: '/timeline', failureRedirect: '/login' });
+// exports.login = function(req, res) {
+// 	console.log(req.body);
+// 	Account.findById(req.user.id, function(err, account) {
+
+// 		res.render('timeline', user: account);
+// 		// res.json(account);
+// 	});
+// }
 
 exports.logout = function(req, res) {
   req.logout();

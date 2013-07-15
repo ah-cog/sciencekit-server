@@ -54,17 +54,9 @@ $(function() {
 			// stage.addChild(s);
 		});
 
-		socketio.on('thought', function(thought) {
-			addThought(thought);
-		});
-
-		socketio.on('photo', function(photo) {
-			addPhoto(photo);
-		});
-
-		socketio.on('thought', function(thought) {
-			console.log('Received thought: ' + thought);
-		});
+		// socketio.on('photo', function(photo) {
+		// 	addPhoto(photo);
+		// });
 
 		socketio.on('disconnect', function() {
 			console.log('Socket disconnected');

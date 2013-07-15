@@ -6,7 +6,6 @@ var passport = require('passport')
 	, Timeline = require('../models/timeline')
 	, Moment = require('../models/moment')
 	, Photo = require('../models/photo')
-	, Thought = require('../models/thought')
 	, Bump = require('../models/bump')
 	, Collaboration = require('../models/collaboration')
 	, Identity = require('../models/identity')
@@ -104,20 +103,19 @@ exports.read = [
 												Collaboration.find({ entry: moment._id }).sort('-date').exec(function(err, collaborations) {
 													// Identity.find({ entry: moment._id }).sort('-date').exec(function(err, bumps) {
 
-
 														// Populate the Moment on the Timeline
 														// moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
 														moment.populate({ path: 'entry', model: moment.entryType }, function(err, momentPopulated) {
 
-															console.log("momentPopulated");
-															console.log(momentPopulated);
+															// console.log("momentPopulated");
+															// console.log(momentPopulated);
 
 															// if (momentPopulated !== null && momentPopulated.entry !== null) {
 
 															moment.populate({ path: 'author' }, function(err, momentPopulated) {
 
-																console.log("momentPopulated");
-																console.log(momentPopulated);
+																// console.log("momentPopulated");
+																// console.log(momentPopulated);
 
 																if (momentPopulated !== null && momentPopulated.entry !== null) {
 
@@ -198,6 +196,159 @@ exports.read = [
 				}
 			});
 		}
+	}
+];
+
+exports.readEntry = [
+	passport.authenticate('bearer', { session: false }),
+	function(req, res) {
+
+		var entryId = req.params.id;
+
+		console.log('entryId = ' + entryId);
+
+		//
+		// Construct Timeline JSON object to return to client
+		//
+	
+		// console.log("Timeline.find() conditions:");
+		// console.log(conditions);
+
+		// Timeline.findOne(conditions, function(err, timeline) {
+		// Timeline.findOne(conditions).sort('date').exec(function(err, timeline) {
+
+			// console.log(timeline);
+
+			// if (err) {
+			// 	return console.log(err);
+			// } else {
+
+				// if (timeline === null) {
+				// 	console.log('Error: Timeline is null');
+				// 	return res.json({});
+				// }
+
+				// Check if the Timeline's parent Moment is associated with a Tag.  If so, get all Moments associated with the given Tag.
+
+				// Response
+				// var result = {};
+				// result._id = timeline._id;
+				// result.moment = timeline.moment;
+
+				// Get timeline elements
+				// TODO: Optimize.  There's got to be a better way! Maybe asynchronous? Maybe use sockets for streaming data back? Create "async" version of API and HTTP request-based one?
+				Moment.findOne({ _id: entryId }, function(err, moment) {
+
+					// if (moments !== null && moments.length > 0) {
+
+						// Populate the timeline
+						// var resultEntries = [];
+						// var count = moments.length; // Hacky solution used to force synchronous operation. Optimize!
+						console.log(moment);
+						// moments.forEach(function (moment, momentIndex, momentArray) {
+
+							// Get Questions (if any) for Entry
+
+							Question.find({ parent: moment._id }).sort('-date').exec(function(err, questions) {
+								Observation.find({ parent: moment._id }).sort('-date').exec(function(err, observations) {
+									Sequence.find({ parent: moment._id }).sort('-date').exec(function(err, sequences) {
+										Bump.find({ entry: moment._id }).sort('-date').exec(function(err, bumps) {
+											Collaboration.find({ entry: moment._id }).sort('-date').exec(function(err, collaborations) {
+												// Identity.find({ entry: moment._id }).sort('-date').exec(function(err, bumps) {
+
+
+													// Populate the Moment on the Timeline
+													// moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
+													moment.populate({ path: 'entry', model: moment.entryType }, function(err, momentPopulated) {
+
+														console.log("momentPopulated");
+														console.log(momentPopulated);
+
+														// if (momentPopulated !== null && momentPopulated.entry !== null) {
+
+														moment.populate({ path: 'author' }, function(err, momentPopulated) {
+
+															console.log("momentPopulated");
+															console.log(momentPopulated);
+
+															if (momentPopulated !== null && momentPopulated.entry !== null) {
+
+																var entryObject = momentPopulated.toObject();
+
+																// Add to results
+																if (questions !== null && questions.length > 0) {
+																	console.log("HAS QUESTIONS: " + questions.length);
+																	entryObject.questions = questions;
+																}
+
+																// Add to results
+																if (observations !== null && observations.length > 0) {
+																	console.log("HAS OBSERVATIONS: " + observations.length);
+																	entryObject.observations = observations;
+																}
+
+																// Add to results
+																if (sequences !== null && sequences.length > 0) {
+																	console.log("HAS SEQUENCES: " + sequences.length);
+																	entryObject.sequences = sequences;
+																}
+
+																// Add to results
+																if (bumps !== null && bumps.length > 0) {
+																	console.log("HAS SEQUENCES: " + bumps.length);
+																	entryObject.bumps = bumps;
+																}
+
+																// Add Collaboration to results
+																if (collaborations !== null && collaborations.length > 0) {
+																	console.log("HAS COLLABORATIONS: " + collaborations.length);
+																	entryObject.collaborations = collaborations;
+																}
+
+																// resultEntries.push(entryObject);
+																// resultEntries[momentIndex] = entryObject;
+
+																// count--;
+
+																// if(count <= 0) {
+
+																	// Return result
+																	// result.moments = moments;
+																	// result.moments = resultEntries;
+																	res.json(entryObject);
+																// }
+
+															} else {
+																// count--;
+																// if(count <= 0) {
+
+																	// Return result
+																	// result.moments = resultEntries;
+																	// result.moments = moments;
+																	res.json(entryObject);
+																// }
+															}
+														});
+													});
+
+
+
+												// });
+											});
+										});
+									});
+								});
+							});
+
+							
+						});
+
+					// } else {
+					// 	res.json({});
+					// }
+				// });
+			// }
+		// });
 	}
 ];
 

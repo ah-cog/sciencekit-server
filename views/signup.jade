@@ -1,16 +1,55 @@
 extends layout
 
+extends layout
+
 block content
-	h1(class='login') signup
+	div
+		img(src="./images/sciencekit-logo.png", alt="sciencekit logo")
+
+	p(class='auth', style="font-family: Monaco; color: #62df42; background-color: black; padding: 15px;") > choose a username and password
 
 	form(action='/signup', method='post')
-		div
-			label Username: 
-			input(type="text", id="username", name="username")
+		div(id="host-settings", style="display: table; width: 100%;")
+			div(style='margin: 0px 40px 0px 40px; font-size: 35px;')
+				| username
 
-		div
-			label Password: 
-			input(type="password", id="password", name="password")
+			div(style="display: table-row;")
 
-		div
-			input(type="submit", id="create-account-button", value="Create")
+				div(style="display: table-cell; position: relative; z-index: 0; width: 100%;")
+
+					div(class="text-input-widget")
+						div(class="element-table", style="display: table; width: 100%;")
+
+
+							div(class="element", style="display: table-row;")
+								div(class="text", style="display: table-cell; min-width: 100%; vertical-align: middle;")
+									input(type='text', id='usernameInput', name='username')
+
+								div(class="options", style="width: 75px; display: table-cell; text-align: right; vertical-align: middle;")
+									img(id="hostAddressSave", src="./img/check.png", style="display: none;")
+									img(id="hostAddressInvalid", src="./img/cross-red.png", style="display: none;")
+
+		div(id="host-settings", style="display: table; width: 100%;")
+			div(style='margin: 0px 40px 0px 40px; font-size: 35px;')
+				| password
+
+			div(style="display: table-row;")
+
+				div(style="display: table-cell; position: relative; z-index: 0; width: 100%;")
+
+					div(class="text-input-widget")
+						div(class="element-table", style="display: table; width: 100%;")
+
+
+							div(class="element", style="display: table-row;")
+								div(class="text", style="display: table-cell; min-width: 100%; vertical-align: middle;")
+									input(type='password', id='usernameInput', name='password')
+
+								div(class="options", style="width: 75px; display: table-cell; text-align: right; vertical-align: middle;")
+									img(id="hostAddressSave", src="./img/check.png", style="display: none;")
+									img(id="hostAddressInvalid", src="./img/cross-red.png", style="display: none;")
+
+		br
+		button(type="submit", value="submit", id="login", style="border: 0px; padding: 0px;")
+			span(class="auth")
+				| signup

@@ -1,5 +1,4 @@
 exports.account = require('./account');
-exports.thought = require('./thought');
 exports.timeline = require('./timeline');
 exports.Story = require('./story');
 exports.Question = require('./question');
@@ -8,8 +7,6 @@ exports.Identity = require('./identity');
 exports.Observation = require('./observation');
 exports.Sequence = require('./sequence');
 exports.Photo = require('./photo');
-exports.Avatar = require('./avatar');
-exports.Topic = require('./topic');
 exports.Text = require('./text');
 exports.Tag = require('./tag');
 exports.Bump = require('./bump');

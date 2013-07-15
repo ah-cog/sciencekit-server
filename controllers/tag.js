@@ -79,6 +79,11 @@ exports.create = [
             console.log("Received Tag template: ");
             console.log(template);
 
+            if (template.hasOwnElement('text') && template['text'].length > 0) {
+            } else {
+                res.json({});
+            }
+
             //
             // Check if Tag with specified label exists for the Material
             //

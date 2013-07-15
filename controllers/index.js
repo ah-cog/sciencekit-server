@@ -9,6 +9,7 @@ exports.Sequence = require('./sequence');
 exports.Photo = require('./photo');
 exports.Text = require('./text');
 exports.Tag = require('./tag');
+exports.Note = require('./note');
 exports.Bump = require('./bump');
 exports.Video = require('./video');
 exports.Sketch = require('./sketch');

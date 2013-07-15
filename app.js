@@ -311,6 +311,9 @@ app.post('/api/identity',  controllers.Identity.create);
 app.post('/api/:activityType/tag',  controllers.Tag.create);
 app.get('/api/tag',  controllers.Tag.read);
 
+app.post('/api/note',  controllers.Note.create);
+app.get('/api/note',  controllers.Note.read);
+
 app.post('/api/:activityType/bump',  controllers.Bump.create);
 app.get('/api/bump',  controllers.Bump.read);
 

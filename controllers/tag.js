@@ -17,8 +17,6 @@ exports.read = [
 
         // Get Frame ID
         var entryId = req.query.entryId;
-        //var frameType = activityType.charAt(0).toUpperCase() + activityType.slice(1) + 'Frame';
-        console.log('Getting Tags for Entry ' + entryId);
 
         if (entryId) {
 
@@ -26,29 +24,12 @@ exports.read = [
             Tag.find({ entry: entryId }).sort('text').exec(function(err, tags) {
                 if (err) throw err;
 
-                console.log('Got tag count: ' + tags.length);
-
                 var result = [];
 
                 var tagCount = tags.length;
                 if (tagCount > 0) {
 
                     res.json(tags);
-
-                    // tags.forEach(function (tag) {
-
-                    //     // getTagTimeline(tag.text, function(err, timeline) {
-                    //         // var tagResult = {};
-                    //         // tagResult.timeline = timeline;
-                    //         // tagResult.tag = tag;
-                    //         // result.push(tagResult);
-                    //         result.push(tag.text);
-                    //         tagCount--;
-                    //         if(tagCount <= 0) {
-                    //             res.json(result);
-                    //         }
-                    //     // });
-                    // });
 
                 } else {
                     res.json(result);
@@ -79,9 +60,9 @@ exports.create = [
             console.log("Received Tag template: ");
             console.log(template);
 
-            if (template.hasOwnElement('text') && template['text'].length > 0) {
-            } else {
+            if (template.text === undefined || template.text.length <= 0) {
                 res.json({});
+                return;
             }
 
             //

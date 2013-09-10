@@ -29,18 +29,25 @@ exports.read = [
 	    // `BearerStrategy`.  It is typically used to indicate scope of the token,
 	    // and used in access control checks.  For illustrative purposes, this
 	    // example simply returns the scope in the response.
+	    var response = [];
 		Account.find({}, function(err, accounts) {
 
 			var count = accounts.length; // Hacky solution used to force synchronous operation. Optimize!
 			accounts.forEach(function (account) {
-				count--;
 
-				// HACK: Clear the password for security (this is not a terribly great solution)
-				account.password = '';
+				// Only respond with accounts other than the requester's account
+				if (account._id != req.user.id) {
+					var accountObject = account.toObject();
+					// accountObject.password = '';
+					delete accountObject['password'];
+					response.push(accountObject);
+				}
+
+				count--;
 
 				if(count <= 0) {
 					// Return result
-					res.json(accounts);
+					res.json(response);
 				}
 			});
 		});

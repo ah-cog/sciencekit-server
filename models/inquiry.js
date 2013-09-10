@@ -11,6 +11,7 @@ var mongoose = require('mongoose')
 	, Collaboration = require('./collaboration')
 	, Identity = require('./identity')
 	, Video = require('./video')
+	, Note = require('./note')
 	, Sketch = require('./sketch');
 
 var inquirySchema = new mongoose.Schema({
@@ -711,11 +712,45 @@ inquirySchema.statics.addStory = function(storyTemplate, fn) {
 						console.log("Created and saved Page:");
 						console.log(page);
 
-						page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
-							pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
-								fn(null, pagePopulated);
+						//
+						// Create Page
+						//
+
+						// console.log(storyTemplate.entries[note]);
+
+						// if (storyTemplate.entries[entry].note !== undefined && storyTemplate.entries[entry].note !== '') {
+						// 	Note.create({
+						// 		page: page,
+						// 		note: storyTemplate.entries[entry].note
+
+						// 	}, function(err, note) {
+						// 		if (err) throw err;
+
+						// 		console.log("Created and saved Note:");
+						// 		console.log(note);
+
+						// 		page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
+						// 			pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+						// 				fn(null, pagePopulated);
+						// 			});
+						// 		});
+						// 	});
+						// } else {
+							console.log("Created and saved Note:");
+							// console.log(note);
+
+							page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
+								pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+									fn(null, pagePopulated);
+								});
 							});
-						});
+						// }
+
+						// page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
+						// 	pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+						// 		fn(null, pagePopulated);
+						// 	});
+						// });
 					});
 				}
 				

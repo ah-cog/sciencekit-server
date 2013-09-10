@@ -290,6 +290,7 @@ app.get('/api/status', function(req, res, next) {
 app.get('/api/account',   controllers.account.read);
 
 app.get('/api/timeline',  controllers.timeline.read);
+app.get('/api/storyhack',  controllers.timeline.readStoryHack);
 
 app.get('/api/entry/:id',  controllers.timeline.readEntry);
 
@@ -451,8 +452,8 @@ io.configure(function () {
     //    , 'xhr-polling'
     //    , 'jsonp-polling'
     //    ]);
-    io.set("transports", ["xhr-polling"]); 
-    io.set("polling duration", 10); 
+    // io.set("transports", ["xhr-polling"]); 
+    // io.set("polling duration", 10); 
 
     // Enable and set up socket.io streaming authorization
     // [Source: https://github.com/LearnBoost/socket.io/wiki/Authorizing]

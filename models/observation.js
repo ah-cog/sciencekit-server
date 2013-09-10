@@ -4,8 +4,8 @@ var mongoose = require('mongoose')
 var observationSchema = new mongoose.Schema({
 	parent: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
 
-	effect: { type: String, required: true },
-	cause: { type: String, required: true },
+	effect: { type: String },
+	cause: { type: String },
 	
 	date: { type: Date, default: Date.now },
 	hidden: Boolean,

@@ -2,7 +2,7 @@ var mongoose = require('mongoose')
 	, Account = require('./account');
 
 var noteSchema = new mongoose.Schema({
-	entry: { type: mongoose.Schema.Types.ObjectId },
+	page: { type: mongoose.Schema.Types.ObjectId, ref: 'Page' },
 
 	note: { type: String, required: true },
 	

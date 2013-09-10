@@ -20,25 +20,27 @@ exports.create = [
             // console.log(collaborationTemplate);
             // console.log("Timeline = %s", collaborationTemplate.timeline);
 
+            if (noteTemplate.note.length <= 0) {
+                res.json({});
+                return;
+            }
+
             Note.create({
                 account: noteTemplate.account,
-                entry: noteTemplate.entry,
+                page: noteTemplate.page,
                 note: noteTemplate.note
 
             }, function(err, note) {
 
                 if (err) throw err;
 
-                io.sockets.emit('note', note);
-                res.json(note);
+                note.populate({ path: 'page', model: 'Page' }, function(err, notePopulated) {
+
+                    io.sockets.emit('note', note);
+                    res.json(note);
+                });
 
             });
-
-
-            // Inquiry.addNote(collaborationTemplate, function(err, entry) {
-            //     io.sockets.emit('note', entry);
-            //     res.json(entry);
-            // });
             
         });
     }
@@ -52,30 +54,30 @@ exports.read = [
         //var activityType = req.params.activityType;
 
         // Get Frame ID
-        var entryId = null;
-        if (req.query['entryId']) {
-            entryId = req.query['entryId'];
+        var pageId = null;
+        if (req.query['pageId']) {
+            pageId = req.query['pageId'];
         }
         //var frameType = activityType.charAt(0).toUpperCase() + activityType.slice(1) + 'Frame';
-        console.log('Getting Notes for Entry ' + entryId);
+        console.log('Getting Notes for Page ' + pageId);
 
         var result = [];
 
-        if (entryId !== null) {
+        if (pageId !== null) {
 
-            Note.find({ entry: entryId }).sort('-date').exec(function(err, notes) {
+            Note.findOne({ page: pageId }).sort('-date').exec(function(err, note) {
                 if (err) throw err;
 
-                console.log('Got note count: ' + notes.length);
-
-                var noteCount = notes.length;
-                if (noteCount > 0) {
-
-                    res.json(notes);
-
-                } else {
-                    res.json(result);
+                if (note === null) {
+                    res.json([]);
+                    return;
                 }
+
+                note.populate({ path: 'page', model: 'Page' }, function(err, notePopulated) {
+
+                    io.sockets.emit('note', notePopulated);
+                    res.json(notePopulated);
+                });
                 
             });
         } else {

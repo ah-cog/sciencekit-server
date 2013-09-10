@@ -4,7 +4,7 @@ var mongoose = require('mongoose')
 var questionSchema = new mongoose.Schema({
 	parent: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
 
-	question: { type: String, required: true },
+	question: { type: String },
 	
 	date: { type: Date, default: Date.now },
 	hidden: Boolean,

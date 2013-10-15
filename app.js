@@ -24,10 +24,21 @@ var AccessToken = require('./models/accesstoken')
   , Timeline = require('./models/timeline');
 
 
+var argPort = 3000;
+var database = 'sciencekit';
+
+// print process.argv
+// process.argv.forEach(function(val, index, array) {
+//     console.log(index + ': ' + val);
+// });
+argPort = parseInt(process.argv[2]);
+database = process.argv[3];
+
+
 
 
 // Connect to Mongoose
-var mongooseUri = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/sciencekit';
+var mongooseUri = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/' + database;
 
 // mongoose.connect(uri, options);
 //    db      - passed to the connection db instance
@@ -104,7 +115,8 @@ app.configure(function() {
 
     // Start listening for incoming connections on specified port.
     // This port setting is needed by Heroku or the app will not run.
-    var port = process.env.PORT || 3000;
+    //var port = process.env.PORT || 3000;
+    var port = process.env.PORT || argPort;
 
     app.set('port', port);
 

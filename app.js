@@ -31,8 +31,8 @@ var database = 'sciencekit';
 // process.argv.forEach(function(val, index, array) {
 //     console.log(index + ': ' + val);
 // });
-argPort = parseInt(process.argv[2]);
-database = process.argv[3];
+// argPort = parseInt(process.argv[2]);
+// database = process.argv[3];
 
 
 

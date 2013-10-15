@@ -26,6 +26,65 @@ var AccessToken = require('./models/accesstoken')
 
 
 
+// Connect to Mongoose
+var mongooseUri = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/sciencekit';
+
+// mongoose.connect(uri, options);
+//    db      - passed to the connection db instance
+//    server  - passed to the connection server instance(s)
+//    replset - passed to the connection ReplSet instance
+//    user    - username for authentication (if not specified in uri)
+//    pass    - password for authentication (if not specified in uri)
+// [Source: http://mongoosejs.com/docs/connections.html]
+// [Source: https://github.com/mongodb/node-mongodb-native]
+var mongooseOptions = {};
+mongoose.connect(mongooseUri, mongooseOptions);
+
+// [Source: http://mongoosejs.com/docs/api.html#connection-js]
+var db = mongoose.connection;
+db.on('error', function callback() {
+    // console.error.bind(console, 'Mongoose connection error: ')
+    console.log('Mongoose connection error.');
+});
+db.once('open', function callback() {
+    console.log('Mongoose connection opened successfully.'); // Yay
+});
+
+// Emitted when this connection successfully connects to the db. May be emitted multiple times in reconnected scenarios.
+db.on('connected', function callback() {
+    console.log('Mongoose: connected');
+});
+// Emitted after getting disconnected from the db.
+db.on('disconnected', function callback() {
+    console.log('Mongoose: disconnected');
+});
+
+
+
+
+//
+// Initialize database
+//
+
+// Create Timeline
+Timeline.find({ hidden: false }).sort('-date').exec(function(err, timelines) {
+    if (timelines.length <= 0) {
+
+        Timeline.create({
+
+        }, function (err, timeline) {
+
+            // Check if error saving Timeline
+            if (err) { console.log('Error creating new Timeline.'); }
+            console.log('Created new Timeline.');
+
+            // Callback
+            // fn(null, timeline);
+        });
+
+    }
+});
+
 
 
 
@@ -274,76 +333,6 @@ app.post('/api/sketch',    controllers.Sketch.create);
 var server = http.createServer(app).listen(app.get('port'), function() {
     console.log("ScienceKit server listening on port " + app.get('port'));
 });
-
-// Connect to Mongoose
-var mongooseUri = null;
-if (server.address().port == 3001) {
-    mongooseUri = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/sciencekit-kidsteam';
-} else if (server.address().port == 3002) {
-    mongooseUri = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/sciencekit-scidentity';
-} else {
-    mongooseUri = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/sciencekit';
-}
-
-// mongoose.connect(uri, options);
-//    db      - passed to the connection db instance
-//    server  - passed to the connection server instance(s)
-//    replset - passed to the connection ReplSet instance
-//    user    - username for authentication (if not specified in uri)
-//    pass    - password for authentication (if not specified in uri)
-// [Source: http://mongoosejs.com/docs/connections.html]
-// [Source: https://github.com/mongodb/node-mongodb-native]
-var mongooseOptions = {};
-mongoose.connect(mongooseUri, mongooseOptions);
-
-// [Source: http://mongoosejs.com/docs/api.html#connection-js]
-var db = mongoose.connection;
-db.on('error', function callback() {
-    // console.error.bind(console, 'Mongoose connection error: ')
-    console.log('Mongoose connection error.');
-});
-db.once('open', function callback() {
-    console.log('Mongoose connection opened successfully.'); // Yay
-});
-
-// Emitted when this connection successfully connects to the db. May be emitted multiple times in reconnected scenarios.
-db.on('connected', function callback() {
-    console.log('Mongoose: connected');
-});
-// Emitted after getting disconnected from the db.
-db.on('disconnected', function callback() {
-    console.log('Mongoose: disconnected');
-});
-
-
-
-
-//
-// Initialize database
-//
-
-// Create Timeline
-Timeline.find({ hidden: false }).sort('-date').exec(function(err, timelines) {
-    if (timelines.length <= 0) {
-
-        Timeline.create({
-
-        }, function (err, timeline) {
-
-            // Check if error saving Timeline
-            if (err) { console.log('Error creating new Timeline.'); }
-            console.log('Created new Timeline.');
-
-            // Callback
-            // fn(null, timeline);
-        });
-
-    }
-});
-
-
-
-
 
 // Starting socket.io
 io = socketio.listen(server);

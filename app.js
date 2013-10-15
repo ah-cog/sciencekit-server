@@ -275,16 +275,11 @@ var server = http.createServer(app).listen(app.get('port'), function() {
     console.log("ScienceKit server listening on port " + app.get('port'));
 });
 
-console.log('Server running on %s', server.address().port);
-
-
-
-
-
 // Connect to Mongoose
 var mongooseUri = null;
 if (server.address().port == 3001) {
     mongooseUri = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/sciencekit-kidsteam';
+} else if (server.address().port == 3002) {
     mongooseUri = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/sciencekit-scidentity';
 } else {
     mongooseUri = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/sciencekit';

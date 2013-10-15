@@ -13,7 +13,8 @@ var express  = require('express')
   , socketio = require('socket.io')
   , stylus   = require('stylus')
   , nib      = require('nib')
-  , moment   = require('moment');
+  , moment   = require('moment')
+  , ffmpeg = require('fluent-ffmpeg');
 
 
 var AccessToken = require('./models/accesstoken')

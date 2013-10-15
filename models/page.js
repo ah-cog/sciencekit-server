@@ -4,7 +4,7 @@ var pageSchema = new mongoose.Schema({
     story: { type: mongoose.Schema.ObjectId, ref: 'Story' }, // Timeline upon which this event occurred (not the one created for this event)
 	author: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' },
 
-    entry: { type: mongoose.Schema.ObjectId, ref: 'Moment'}, // first Topic created for TopicFrame
+    page: { type: mongoose.Schema.ObjectId, ref: 'Moment'}, // first Topic created for TopicFrame
     // entryType: { type: 'String' }, // e.g., 'Thought' (the name of the model being framed)
 
     chapter: { type: String, default: '' },

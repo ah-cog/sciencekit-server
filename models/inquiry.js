@@ -12,7 +12,8 @@ var mongoose = require('mongoose')
 	, Identity = require('./identity')
 	, Video = require('./video')
 	, Note = require('./note')
-	, Sketch = require('./sketch');
+	, Sketch = require('./sketch')
+	, ffmpeg = require('fluent-ffmpeg');
 
 var inquirySchema = new mongoose.Schema({
 	timeline: { type: mongoose.Schema.ObjectId, ref: 'Timeline', required: true },
@@ -564,6 +565,23 @@ inquirySchema.statics.addVideo = function(entryTemplate, fn) {
 
 	}, function(err, entry) {
 		if (err) throw err;
+
+		//
+		// Create thumbnails images for video
+		//
+
+		var proc = new ffmpeg({ source: entryTemplate.file.path })
+			.withSize('480x360')
+			.takeScreenshots({
+						count: 1,
+						filename: entryTemplate.uri.split('/')[2].split('.')[0]
+					}, './public/thumbnails', function(err, filenames) {
+					if(err) {
+						throw err;
+					}
+					console.log(filenames);
+					console.log('screenshots were saved');
+				});
 
 		//
 		// Create Entry

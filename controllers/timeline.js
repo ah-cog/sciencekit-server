@@ -19,29 +19,24 @@ exports.read = [
 	passport.authenticate('bearer', { session: false }),
 	function(req, res) {
 
+		// Timeline query conditions
 		conditions = {};
+
 		if (req.query['id']) {
 			conditions['_id'] = req.query['id'];
-
 			getTimeline();
 		} else if (req.query['moment_id']) {
 			conditions['moment'] = req.query['moment_id'];
-
 			getTimeline();
 		} else if (req.query['frameId']) {
-
 			Moment.findOne({ frame: req.query['frameId'] }, function(err, moment) {
 
 				// Create timeline for account if one doesn't exist
 				if (moment === null) {
-
 					// TODO: Handle this case.  Should happen, but it might in weird situations!
-
 				} else {
-
 					console.log('Found Moment:' + moment.id);
 					conditions['moment'] = moment.id;
-
 					getTimeline();
 				}
 			});
@@ -105,85 +100,79 @@ exports.read = [
 										Sequence.find({ parent: moment._id }).sort('-date').exec(function(err, sequences) {
 											Bump.find({ entry: moment._id }).sort('-date').exec(function(err, bumps) {
 												Collaboration.find({ entry: moment._id }).sort('-date').exec(function(err, collaborations) {
-													// Identity.find({ entry: moment._id }).sort('-date').exec(function(err, bumps) {
 
-														// Populate the Moment on the Timeline
-														// moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
-														moment.populate({ path: 'entry', model: moment.entryType }, function(err, momentPopulated) {
+													// Populate the Moment on the Timeline
+													// moment.populate({ path: 'frame', model: 'Frame' }, function(err, populatedMoment) {
+													moment.populate({ path: 'entry', model: moment.entryType }, function(err, momentPopulated) {
+
+														// console.log("momentPopulated");
+														// console.log(momentPopulated);
+
+														// if (momentPopulated !== null && momentPopulated.entry !== null) {
+
+														moment.populate({ path: 'author' }, function(err, momentPopulated) {
 
 															// console.log("momentPopulated");
 															// console.log(momentPopulated);
 
-															// if (momentPopulated !== null && momentPopulated.entry !== null) {
+															if (momentPopulated !== null && momentPopulated.entry !== null) {
 
-															moment.populate({ path: 'author' }, function(err, momentPopulated) {
+																var entryObject = momentPopulated.toObject();
 
-																// console.log("momentPopulated");
-																// console.log(momentPopulated);
-
-																if (momentPopulated !== null && momentPopulated.entry !== null) {
-
-																	var entryObject = momentPopulated.toObject();
-
-																	// Add to results
-																	if (questions !== null && questions.length > 0) {
-																		entryObject.questions = questions;
-																	}
-
-																	// Add to results
-																	if (observations !== null && observations.length > 0) {
-																		entryObject.observations = observations;
-																	}
-
-																	// Add to results
-																	if (sequences !== null && sequences.length > 0) {
-																		entryObject.sequences = sequences;
-																	}
-
-																	// Add to results
-																	if (bumps !== null && bumps.length > 0) {
-																		entryObject.bumps = bumps;
-																	}
-
-																	// Add Collaboration to results
-																	if (collaborations !== null && collaborations.length > 0) {
-																		entryObject.collaborations = collaborations;
-																	}
-
-																	// resultEntries.push(entryObject);
-																	resultEntries[(moments.length - momentIndex - 1)] = entryObject;
-
-																	count--;
-
-																	if(count <= 0) {
-
-																		// Return result
-																		result.moments = resultEntries;
-																		res.json(result);
-																	}
-
-																} else {
-																	count--;
-																	if(count <= 0) {
-
-																		// Return result
-																		result.moments = resultEntries;
-																		res.json(result);
-																	}
+																// Add to results
+																if (questions !== null && questions.length > 0) {
+																	entryObject.questions = questions;
 																}
-															});
+
+																// Add to results
+																if (observations !== null && observations.length > 0) {
+																	entryObject.observations = observations;
+																}
+
+																// Add to results
+																if (sequences !== null && sequences.length > 0) {
+																	entryObject.sequences = sequences;
+																}
+
+																// Add to results
+																if (bumps !== null && bumps.length > 0) {
+																	entryObject.bumps = bumps;
+																}
+
+																// Add Collaboration to results
+																if (collaborations !== null && collaborations.length > 0) {
+																	entryObject.collaborations = collaborations;
+																}
+
+																// resultEntries.push(entryObject);
+																resultEntries[(moments.length - momentIndex - 1)] = entryObject;
+
+																count--;
+
+																if(count <= 0) {
+
+																	// Return result
+																	result.moments = resultEntries;
+																	res.json(result);
+																}
+
+															} else {
+																count--;
+																if(count <= 0) {
+
+																	// Return result
+																	result.moments = resultEntries;
+																	res.json(result);
+																}
+															}
 														});
-
-
-
-													// });
+													});
 												});
 											});
 										});
 									});
 								});
 
-								
 							});
 
 						} else {

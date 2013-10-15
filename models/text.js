@@ -6,6 +6,7 @@ var textSchema = new mongoose.Schema({
 	moment: { type: mongoose.Schema.Types.ObjectId, ref: 'Moment' },
 
 	// text: { type: String, required: false }, // e.g., 'Thought'
+	// text: { type: String, required: true },
 
 	date: { type: Date, default: Date.now },
 	hidden: Boolean,

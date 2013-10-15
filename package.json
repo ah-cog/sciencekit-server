@@ -28,6 +28,7 @@
     "url": "*",
     "mongoose": "*",
     "moment": "*",
-    "bcrypt": "*"
+    "bcrypt": "*",
+    "fluent-ffmpeg": "*"
   }
 }

@@ -712,64 +712,69 @@ inquirySchema.statics.addStory = function(storyTemplate, fn) {
 				// Create Pages for each Entry
 				//
 
-				for (entry in storyTemplate.entries) {
-					console.log(storyTemplate.entries[entry]);
+				for (entryGroup in storyTemplate.entries) {
+					console.log(storyTemplate.entries[entryGroup]);
 
-					//
-					// Create Page
-					//
-
-					Page.create({
-						story: story,
-						author: storyTemplate.account,
-						entry: storyTemplate.entries[entry].entry
-
-					}, function(err, page) {
-						if (err) throw err;
-
-						console.log("Created and saved Page:");
-						console.log(page);
+					for (entryPosition in storyTemplate.entries[entryGroup]) {
 
 						//
 						// Create Page
 						//
 
-						// console.log(storyTemplate.entries[note]);
+						Page.create({
+							story: story,
+							author: storyTemplate.account,
+							entry: storyTemplate.entries[entryGroup][entryPosition].entry,
+							group: storyTemplate.entries[entryGroup][entryPosition]['group'],
+							position: storyTemplate.entries[entryGroup][entryPosition]['position']
 
-						// if (storyTemplate.entries[entry].note !== undefined && storyTemplate.entries[entry].note !== '') {
-						// 	Note.create({
-						// 		page: page,
-						// 		note: storyTemplate.entries[entry].note
+						}, function(err, page) {
+							if (err) throw err;
 
-						// 	}, function(err, note) {
-						// 		if (err) throw err;
+							console.log("Created and saved Page:");
+							console.log(page);
 
-						// 		console.log("Created and saved Note:");
-						// 		console.log(note);
+							//
+							// Create Page
+							//
 
-						// 		page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
-						// 			pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
-						// 				fn(null, pagePopulated);
-						// 			});
-						// 		});
-						// 	});
-						// } else {
-							console.log("Created and saved Note:");
-							// console.log(note);
+							// console.log(storyTemplate.entries[note]);
 
-							page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
-								pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
-									fn(null, pagePopulated);
+							// if (storyTemplate.entries[entry].note !== undefined && storyTemplate.entries[entry].note !== '') {
+							// 	Note.create({
+							// 		page: page,
+							// 		note: storyTemplate.entries[entry].note
+
+							// 	}, function(err, note) {
+							// 		if (err) throw err;
+
+							// 		console.log("Created and saved Note:");
+							// 		console.log(note);
+
+							// 		page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
+							// 			pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+							// 				fn(null, pagePopulated);
+							// 			});
+							// 		});
+							// 	});
+							// } else {
+								//console.log("Created and saved Note:");
+								// console.log(note);
+
+								page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
+									pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+										fn(null, pagePopulated);
+									});
 								});
-							});
-						// }
+							// }
 
-						// page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
-						// 	pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
-						// 		fn(null, pagePopulated);
-						// 	});
-						// });
-					});
+							// page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
+							// 	pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+							// 		fn(null, pagePopulated);
+							// 	});
+							// });
+						});
+					}
 				}
 				
 			});

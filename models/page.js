@@ -7,7 +7,8 @@ var pageSchema = new mongoose.Schema({
     entry: { type: mongoose.Schema.ObjectId, ref: 'Moment'}, // first Topic created for TopicFrame
     // entryType: { type: 'String' }, // e.g., 'Thought' (the name of the model being framed)
 
-    chapter: { type: String, default: '' },
+    group: { type: Number, default: 0 }, // i.e., "chapter"
+    position: { type: Number, default: 0 }, // i.e., "page number"
 
     date: { type: Date, default: Date.now },
     hidden: Boolean

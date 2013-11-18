@@ -29,6 +29,11 @@ exports.create = [
             // if (data.hasOwnProperty('reference')) activityTemplate.reference = data.reference;
 
 
+            //res.json(storyTemplate.entries[0][0]);
+
+            //return;
+
+
             Inquiry.addStory(storyTemplate, function(err, story) {
                 io.sockets.emit('story', story); // TODO: is this the wrong place?  better place?  guaranteed here?
                 res.json(story);

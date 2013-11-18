@@ -5,7 +5,7 @@ var storySchema = new mongoose.Schema({
     timeline: { type: mongoose.Schema.ObjectId, ref: 'Timeline', required: true },
 	author: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' },
 
-	title: { type: String, default: 'The Story Not Named' },
+	title: { type: String, default: 'Unnamed Story' },
 
 	hidden: { type: Boolean, default: false },
 	date: { type: Date, default: Date.now }

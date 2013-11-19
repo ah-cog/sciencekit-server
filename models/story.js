@@ -11,4 +11,20 @@ var storySchema = new mongoose.Schema({
 	date: { type: Date, default: Date.now }
 });
 
+storySchema.statics.getPopulated = function(story, fn) {
+
+	this.findById(story.id, function(err, story) {
+		story.populate({ path: 'author' }, function(err, populatedAuthor) {
+			fn(err, story);
+		});
+	});
+}
+
+storySchema.statics.getPopulated2 = function(story, fn) {
+
+	story.populate({ path: 'author' }, function(err, populatedAuthor) {
+		fn(err, story);
+	});
+}
+
 module.exports = mongoose.model('Story', storySchema); // Compile schema to a model

@@ -13,3 +13,5 @@ exports.Note = require('./note');
 exports.Bump = require('./bump');
 exports.Video = require('./video');
 exports.Sketch = require('./sketch');
+exports.Reflection = require('./reflection');
+exports.Page = require('./page');

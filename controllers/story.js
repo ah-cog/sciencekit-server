@@ -7,6 +7,42 @@ var passport = require('passport')
     , Timeline = require('../models/timeline');
 
 // [Source: http://codahale.com/how-to-safely-store-a-password/]
+// exports.create = [
+//     passport.authenticate('bearer', { session: false }),
+//     function(req, res) {
+//         // TODO: Make sure required parameters are present, correct
+
+//         console.log(req.body);
+
+//         // Get POST data
+//         var data = req.body;
+
+//         Account.findById(req.user.id, function(err, account) {
+
+//             // Create Story template
+//             var storyTemplate = {};
+//             storyTemplate.account = account;
+//             // if (data.hasOwnProperty('timeline')) storyTemplate.timeline = timeline;
+//             storyTemplate.title = data['title'];
+//             storyTemplate.entries = data['entries'];
+//             // if (data.hasOwnProperty('activity'))   activityTemplate.activity   = data.activity;
+//             // if (data.hasOwnProperty('reference')) activityTemplate.reference = data.reference;
+
+
+//             //res.json(storyTemplate.entries[0][0]);
+
+//             //return;
+
+
+//             Inquiry.addStory(storyTemplate, function(err, story) {
+//                 io.sockets.emit('story', story); // TODO: is this the wrong place?  better place?  guaranteed here?
+//                 res.json(story);
+//             });
+            
+//         });
+//     }
+// ];
+
 exports.create = [
     passport.authenticate('bearer', { session: false }),
     function(req, res) {
@@ -19,21 +55,12 @@ exports.create = [
 
         Account.findById(req.user.id, function(err, account) {
 
-            // Create Story template
+            // Create JSON template for Story object
             var storyTemplate = {};
             storyTemplate.account = account;
-            // if (data.hasOwnProperty('timeline')) storyTemplate.timeline = timeline;
             storyTemplate.title = data['title'];
-            storyTemplate.entries = data['entries'];
-            // if (data.hasOwnProperty('activity'))   activityTemplate.activity   = data.activity;
-            // if (data.hasOwnProperty('reference')) activityTemplate.reference = data.reference;
 
-
-            //res.json(storyTemplate.entries[0][0]);
-
-            //return;
-
-
+            // Add story to community
             Inquiry.addStory(storyTemplate, function(err, story) {
                 io.sockets.emit('story', story); // TODO: is this the wrong place?  better place?  guaranteed here?
                 res.json(story);

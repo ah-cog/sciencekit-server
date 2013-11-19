@@ -13,6 +13,7 @@ var mongoose = require('mongoose')
 	, Video = require('./video')
 	, Note = require('./note')
 	, Sketch = require('./sketch')
+	, Reflection = require('./reflection')
 	, ffmpeg = require('fluent-ffmpeg');
 
 var inquirySchema = new mongoose.Schema({
@@ -669,9 +670,245 @@ inquirySchema.statics.addSketch = function(entryTemplate, fn) {
 	});
 }
 
+// Reflection
+
+// Add Reflection to Inquiry
+inquirySchema.statics.addReflection = function(entryTemplate, fn) {
+
+	console.log("addReflection");
+
+	//
+	// Make sure all required properties are present
+	//
+
+	entryTemplate.type = 'Reflection';
+
+	// 'timeline'
+	if (!entryTemplate.hasOwnProperty('timeline')) {
+		// Get oldest Timeline
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
+			if (err) { throw err; }
+
+			entryTemplate.timeline = timeline._id;
+
+			createReflection();
+		});
+
+	} else {
+
+		createReflection();
+	}
+
+	function createReflection() {
+
+		//
+		// Create Reflection
+		//
+
+		Reflection.create({
+			text: entryTemplate.text,
+			author: entryTemplate.account
+
+		}, function(err, entry) {
+			if (err) throw err;
+
+			//
+			// Create Entry
+			//
+
+			Moment.create({
+				timeline: entryTemplate.timeline,
+				author: entryTemplate.account,
+				entry: entry,
+				entryType: entry.constructor.modelName,
+
+			}, function(err, entry) {
+				if (err) throw err;
+
+				console.log("Created and saved Entry:");
+				console.log(entry);
+
+				entry.populate({ path: 'entry', model: entry.entryType }, function(err, entryPopulated) {
+					entryPopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+						fn(null, entry);
+					});
+				});
+			});
+		});
+	}
+}
+
 // Story
 
 // Add Story for Inquiry
+// inquirySchema.statics.addStory = function(storyTemplate, fn) {
+
+// 	//
+// 	// Make sure all required properties are present
+// 	//
+
+// 	storyTemplate.type = 'Story';
+
+// 	// Make sure all required properties are present
+// 	if (!storyTemplate.hasOwnProperty('title')) {
+// 		console.log('Cannot add Story.  Required properties are missing.');
+// 		fn('Cannot add Story.  Required properties are missing.');
+// 	}
+
+// 	// 'timeline'
+// 	if (!storyTemplate.hasOwnProperty('timeline')) {
+// 		// Get oldest Timeline
+// 		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
+// 			if (err) { throw err; }
+
+// 			console.log(timeline);
+
+// 			storyTemplate.timeline = timeline._id;
+
+// 			//
+// 			// Create Story
+// 			//
+
+// 			Story.create({
+// 				timeline: storyTemplate.timeline,
+// 				title: storyTemplate.title,
+// 				author: storyTemplate.account
+
+// 			}, function(err, story) {
+// 				if (err) throw err;
+
+// 				//
+// 				// Create Pages for each Entry
+// 				//
+
+// 				for (entryGroup in storyTemplate.entries) {
+// 					console.log(storyTemplate.entries[entryGroup]);
+
+// 					for (entryPosition in storyTemplate.entries[entryGroup]) {
+
+// 						// TODO: Create Reflection objects in the database
+
+// 						//
+// 						// Create Page
+// 						//
+
+// 						Page.create({
+// 							story: story,
+// 							author: storyTemplate.account,
+// 							entry: storyTemplate.entries[entryGroup][entryPosition].entry,
+// 							group: storyTemplate.entries[entryGroup][entryPosition]['group'],
+// 							position: storyTemplate.entries[entryGroup][entryPosition]['position']
+
+// 						}, function(err, page) {
+// 							if (err) throw err;
+
+// 							console.log("Created and saved Page:");
+// 							console.log(page);
+
+// 							//
+// 							// Create Page
+// 							//
+
+// 							// console.log(storyTemplate.entries[note]);
+
+// 							// if (storyTemplate.entries[entry].note !== undefined && storyTemplate.entries[entry].note !== '') {
+// 							// 	Note.create({
+// 							// 		page: page,
+// 							// 		note: storyTemplate.entries[entry].note
+
+// 							// 	}, function(err, note) {
+// 							// 		if (err) throw err;
+
+// 							// 		console.log("Created and saved Note:");
+// 							// 		console.log(note);
+
+// 							// 		page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
+// 							// 			pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+// 							// 				fn(null, pagePopulated);
+// 							// 			});
+// 							// 		});
+// 							// 	});
+// 							// } else {
+// 								//console.log("Created and saved Note:");
+// 								// console.log(note);
+
+// 								page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
+// 									pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+// 										fn(null, pagePopulated);
+// 									});
+// 								});
+// 							// }
+
+// 							// page.populate({ path: 'entry', model: 'Moment' }, function(err, pagePopulated) {
+// 							// 	pagePopulated.populate({ path: 'author' }, function(err, populatedAuthor) {
+// 							// 		fn(null, pagePopulated);
+// 							// 	});
+// 							// });
+// 						});
+// 					}
+// 				}
+				
+// 			});
+// 		});
+// 	}
+// }
+
+inquirySchema.statics.addPage = function(pageTemplate, fn) {
+
+	//
+	// Make sure all required properties are present
+	//
+
+	pageTemplate.type = 'Page';
+
+	// Make sure all required properties are present
+	// if (!pageTemplate.hasOwnProperty('title')) {
+	// 	console.log('Cannot add Story.  Required properties are missing.');
+	// 	fn('Cannot add Story.  Required properties are missing.');
+	// }
+
+	// 'timeline'
+	if (!pageTemplate.hasOwnProperty('timeline')) {
+		// Get oldest Timeline
+		Timeline.findOne({}).sort('date').exec(function(err, timeline) {
+			if (err) { throw err; }
+
+			console.log(timeline);
+
+			pageTemplate.timeline = timeline._id;
+
+			console.log('PAGE');
+			console.log(pageTemplate);
+
+			//
+			// Create Story
+			//
+
+			console.log('CREATING PAGE');
+			Page.create({
+				timeline: pageTemplate.timeline,
+
+				story: pageTemplate.story, // story
+				entry: pageTemplate.entry, // entry
+				group: pageTemplate.group, // group
+				position: pageTemplate.position, // position
+
+				author: pageTemplate.account
+
+			}, function(err, page) {
+				console.log('CREATED PAGE');
+				if (err) throw err;
+
+				page.populate({ path: 'author' }, function(err, populatedAuthor) {
+					fn(null, page);
+				});
+
+				return;
+			});
+		});
+	}
+}
+
 inquirySchema.statics.addStory = function(storyTemplate, fn) {
 
 	//
@@ -708,6 +945,13 @@ inquirySchema.statics.addStory = function(storyTemplate, fn) {
 			}, function(err, story) {
 				if (err) throw err;
 
+				story.populate({ path: 'author' }, function(err, populatedAuthor) {
+					fn(null, story);
+				});
+
+
+				return;
+
 				//
 				// Create Pages for each Entry
 				//
@@ -716,6 +960,8 @@ inquirySchema.statics.addStory = function(storyTemplate, fn) {
 					console.log(storyTemplate.entries[entryGroup]);
 
 					for (entryPosition in storyTemplate.entries[entryGroup]) {
+
+						// TODO: Create Reflection objects in the database
 
 						//
 						// Create Page

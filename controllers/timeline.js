@@ -59,6 +59,7 @@ exports.read = [
 			// Timeline.findOne(conditions, function(err, timeline) {
 			Timeline.findOne(conditions).sort('date').exec(function(err, timeline) {
 
+				console.log("Timeline:");
 				console.log(timeline);
 
 				if (err) {

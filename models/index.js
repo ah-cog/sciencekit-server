@@ -6,3 +6,5 @@ exports.Moment = require('./moment');
 exports.Text = require('./text');
 exports.Photo = require('./photo');
 exports.Bump = require('./bump');
+exports.Reflection = require('./reflection');
+exports.Page = require('./page');

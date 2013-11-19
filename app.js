@@ -310,6 +310,10 @@ app.get('/api/entry/:id',  controllers.timeline.readEntry);
 app.get('/api/story',  controllers.Story.read);
 app.post('/api/story',  controllers.Story.create);
 
+app.post('/api/reflection',  controllers.Reflection.create);
+
+app.post('/api/page',  controllers.Page.create);
+
 app.post('/api/text',  controllers.Text.create);
 
 app.post('/api/question',  controllers.Question.create);

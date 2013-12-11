@@ -303,7 +303,6 @@ app.get('/api/status', function(req, res, next) {
 app.get('/api/account',   controllers.account.read);
 
 app.get('/api/timeline',  controllers.timeline.read);
-app.get('/api/storyhack',  controllers.timeline.readStoryHack);
 
 app.get('/api/entry/:id',  controllers.timeline.readEntry);
 

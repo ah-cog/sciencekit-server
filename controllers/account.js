@@ -33,10 +33,17 @@ exports.read = [
 		Account.find({}, function(err, accounts) {
 
 			var count = accounts.length; // Hacky solution used to force synchronous operation. Optimize!
+
+			// Add current user's requesting account at the first position
+			var requesterAccountObject = req.user.toObject();
+			delete requesterAccountObject['password'];
+			response.push(requesterAccountObject);
+
+			// Add accounts other than the requesting user's account
 			accounts.forEach(function (account) {
 
 				// Only respond with accounts other than the requester's account
-				if (account._id != req.user.id) {
+				if (!account._id.equals(req.user._id)) {
 					var accountObject = account.toObject();
 					// accountObject.password = '';
 					delete accountObject['password'];

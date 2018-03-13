@@ -16,7 +16,7 @@
     "jade": "0.28.2",
     "nib": "*",
     "require": "*",
-    "socket.io": "*",
+    "socket.io": "0.9.x",
     "stylus": "*",
     "oauth2orize": "*",
     "connect-ensure-login": "*",

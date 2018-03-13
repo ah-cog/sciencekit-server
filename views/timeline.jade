@@ -13,32 +13,14 @@ block content
 
 	p(class="tagline") what happens next, #{ user.username }?
 
-	// label freestyle micro-contribution 
-	// input(id="outgoingChatMessage")
-
 	p(id="action-palette", class="action-palette")
 		a(id="create-thought-button", data-artifact-type="thought", href="javascript:void(0);") thought 
-		//| | 
-		//a(id="create-question-button", href="javascript:void(0);") question 
-		//| | 
-		//a(id="create-cause-and-effect-button", href="javascript:void(0);") cause and effect 
-		//| | 
-		//a(id="create-step-by-step-button", href="javascript:void(0);") step by step 
-		//| | 
-		//a(id="create-note-button", href="javascript:void(0);") note 
+		
 	p(class="action-palette")
 		| photo 
-		//| voice | 
-		//| collage |
-		//| measurement |
-		//| tag |
-		//| time 
 
 	script
-		// Wire up interface
 		$('#create-thought-button').click(function() {
-
-			// Add question to list immediately
 			var e = addThought({ 
 				message: { 
 					text: 'Hey! Hey! Hey!'
@@ -52,8 +34,6 @@ block content
 		});
 
 		$('#create-question-button').click(function() {
-
-			// Add question to list immediately
 			var e = addQuestion({ 
 				message: { 
 					text: 'Hey! Hey! Hey!'
@@ -67,8 +47,6 @@ block content
 		});
 
 		$('#create-cause-and-effect-button').click(function() {
-
-			// Add question to list immediately
 			addCauseAndEffect({ 
 				message: { 
 					text: 'Hey! Hey! Hey!'
@@ -77,26 +55,15 @@ block content
 					username: 'Mike' 
 				}
 			});
-
 			return false;
 		});
 
 		$('#create-step-by-step-button').click(function() {
-
-			console.log('create-step-by-step-button');
-
-			// Add question to list immediately
 			addStepByStep({});
-
 			return false;
 		});
 
 		$('#create-note-button').click(function() {
-
-			console.log('create-note-button');
-
-			// Add question to list immediately
 			addNote({});
-
 			return false;
 		});

@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci && npm cache clean --force
 COPY . .
-RUN mkdir -p public/uploads public/thumbnails && chown -R node:node /app
+RUN mkdir -p public/uploads public/thumbnails && chown node:node public/uploads public/thumbnails
 USER node
 
 FROM base AS test

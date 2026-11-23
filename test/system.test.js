@@ -5,6 +5,7 @@ const {once}=require('node:events');
 const {io:connect}=require('socket.io-client');
 process.env.MONGODB_URI=process.env.TEST_MONGODB_URI || 'mongodb://127.0.0.1:27017/sciencekit_test_'+process.pid;
 process.env.PORT='0';
+process.env.CLIENT_URL='http://localhost:8888';
 const {server,start,stop}=require('../app');
 let base,token,account,entry,story;
 async function request(path,body,auth=token,method=body ? 'POST' : 'GET') {
@@ -26,7 +27,7 @@ test('ScienceKit end-to-end API, persistence and real-time contracts',{timeout:3
   await t.test('signup rejects missing input and duplicate users',async()=>{
     assert.equal((await request('/signup',{})).status,400);
     const response=await fetch(base+'/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'researcher',password:'local-test-password'}),redirect:'manual'});
-    assert.equal(response.status,302);
+    assert.equal(response.status,302);assert.equal(response.headers.get('location'),process.env.CLIENT_URL);
     assert.equal((await request('/signup',{username:'researcher',password:'local-test-password'})).status,409);
   });
   await t.test('incorrect passwords and unauthenticated API requests are rejected',async()=>{

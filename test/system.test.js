@@ -67,6 +67,15 @@ test('ScienceKit end-to-end API, persistence and real-time contracts',{timeout:3
     const form=new FormData();form.set('myphoto',new Blob([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aRZkAAAAASUVORK5CYII=','base64')],{type:'image/png'}),'observation.png');
     const response=await request('/api/photo',form);assert.equal(response.status,200);const photo=await response.json();assert.equal(photo.entryType,'Photo');assert.equal((await fetch(base+photo.entry.uri)).status,200);
   });
+  await t.test('video uploads generate a retrievable thumbnail',async()=>{
+    const bytes=require('node:fs').readFileSync(require('node:path').join(__dirname,'fixtures/observation.mp4'));
+    const form=new FormData();form.set('file',new Blob([bytes],{type:'video/mp4'}),'observation.mp4');
+    const response=await request('/api/video',form);assert.equal(response.status,200,await response.clone().text());
+    const video=await response.json();assert.equal(video.entryType,'Video');
+    assert.equal((await fetch(base+video.entry.uri)).status,200);
+    const thumbnail=video.entry.uri.replace('/uploads/','/thumbnails/').replace(/\.[^/.]+$/,'.jpg');
+    assert.equal((await fetch(base+thumbnail)).status,200);
+  });
   await t.test('invalid and missing resources return errors without hanging',async()=>{
     assert.equal((await request('/api/entry/not-an-id')).status,400);
     assert.equal((await request('/api/entry/000000000000000000000000')).status,404);

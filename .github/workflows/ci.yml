@@ -4,7 +4,7 @@ permissions:
   contents: read
 jobs:
   integration:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 20
     services:
       mongo:
@@ -15,10 +15,14 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-node@v7.1.0
+      - run: docker build --target test -t sciencekit-server:test .
+      - run: docker run --rm --network host sciencekit-server:test
+      - run: docker build --build-arg BUILDKIT_INLINE_CACHE=1 --target runtime -t sciencekit-server:latest .
+      - name: Export tested arm64 image
+        run: docker save sciencekit-server:latest | gzip -1 > ScienceKit-server-arm64.tar.gz
+      - uses: actions/upload-artifact@v7.0.2
         with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: docker build --target runtime -t sciencekit-server:ci .
+          name: ScienceKit-server-arm64
+          path: ScienceKit-server-arm64.tar.gz
+          compression-level: 0
+          retention-days: 3

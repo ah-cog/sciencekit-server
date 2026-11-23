@@ -1,77 +1,14 @@
-var passport = require("passport")
-var bcrypt = require("bcrypt")
-var Account = require("../models/account")
-var Inquiry = require("../models/inquiry")
-var Client = require("../models/client")
-
-exports.readOne = [
-  passport.authenticate("bearer", { session: false }),
-  function(req, res) {
-    Account.findById(req.user.id, function(err, account) {
-      delete account.password
-      res.json(account)
-    })
-  },
-]
-
-exports.read = [
-  passport.authenticate("bearer", { session: false }),
-  function(req, res) {
-    var response = []
-    Account.find({}, function(err, accounts) {
-      var count = accounts.length
-
-      var requesterAccountObject = req.user.toObject()
-      delete requesterAccountObject["password"]
-      response.push(requesterAccountObject)
-
-      accounts.forEach(function(account) {
-        if (!account._id.equals(req.user._id)) {
-          var accountObject = account.toObject()
-          delete accountObject["password"]
-          response.push(accountObject)
-        }
-
-        count--
-
-        if (count <= 0) {
-          res.json(response)
-        }
-      })
-    })
-  },
-]
-
-exports.create = function(req, res) {
-  var accountTemplate = req.body
-
-  if (accountTemplate.username !== "" && accountTemplate.password !== "") {
-    // Hash the password using bcrypt.
-    var workFactor = 10
-    bcrypt.genSalt(workFactor, function(err, salt) {
-      bcrypt.hash(accountTemplate.password, salt, function(err, hash) {
-        var account = new Account({
-          username: accountTemplate.username,
-          password: hash,
-          name: "",
-        })
-        account.save(function(err, account) {
-          if (err) {
-            console.log("Error creating account: " + account)
-            res.redirect("/signup")
-          }
-          Client.create(
-            {
-              name: "ScienceKit Client",
-              clientId: "abc123",
-              clientSecret: "ssh-secret",
-            },
-            function(err, client) {
-              res.redirect("/login")
-            }
-          )
-        })
-      })
-    })
-  }
-}
+const bcrypt = require('bcrypt');
+const Account = require('../models/account');
+exports.create = async (req,res) => {
+  const {username,password} = req.body;
+  if (typeof username !== 'string' || !username.trim() || typeof password !== 'string' || password.length < 8 || Buffer.byteLength(password) > 72) return res.status(400).send('Username and a password of 8–72 bytes are required.');
+  try { await Account.create({username:username.trim(),password:await bcrypt.hash(password,12)}); }
+  catch(error) { if(error.code===11000) return res.status(409).send('Username already exists.'); throw error; }
+  res.redirect('/login');
+};
+exports.read = async (req,res) => {
+  const accounts = await Account.find({}).lean();
+  accounts.sort((a,b)=>Number(String(b._id)===req.user.id)-Number(String(a._id)===req.user.id));
+  res.json(accounts);
+};

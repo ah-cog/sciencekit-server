@@ -10,34 +10,4 @@ var momentSchema = new mongoose.Schema({
   hidden: Boolean,
 })
 
-momentSchema.statics.getPopulated = function(moment, fn) {
-  this.findById(moment.id, function(err, moment) {
-    moment.populate({ path: "entry", model: moment.entryType }, function(
-      err,
-      populatedMoment
-    ) {
-      populatedMoment.populate({ path: "author" }, function(
-        err,
-        populatedAuthor
-      ) {
-        fn(err, moment)
-      })
-    })
-  })
-}
-
-momentSchema.statics.getPopulated2 = function(moment, fn) {
-  moment.populate({ path: "entry", model: moment.entryType }, function(
-    err,
-    populatedMoment
-  ) {
-    populatedMoment.populate({ path: "author" }, function(
-      err,
-      populatedAuthor
-    ) {
-      fn(err, populatedMoment)
-    })
-  })
-}
-
 module.exports = mongoose.model("Moment", momentSchema)

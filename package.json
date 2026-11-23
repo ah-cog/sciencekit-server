@@ -1,34 +1,49 @@
 {
-  "name": "ScienceKit",
-  "description": "ScienceKit Web Application",
-  "version": "0.0.1",
+  "name": "sciencekit-server",
+  "version": "1.0.0",
   "private": true,
+  "description": "ScienceKit collaborative science server",
   "engines": {
-      "npm":  "1.2.15",
-      "node": "0.10.x"
+    "node": ">=24"
   },
   "scripts": {
-    "start": "node app"
+    "start": "node --env-file-if-exists=.env app.js",
+    "dev": "node --watch --env-file-if-exists=.env app.js",
+    "test": "node --test",
+    "seed": "node --env-file-if-exists=.env scripts/seed.js"
   },
   "dependencies": {
-    "express": "3.1.0",
-    "ejs": "*",
-    "jade": "0.28.2",
-    "nib": "*",
-    "require": "*",
-    "socket.io": "0.9.x",
-    "stylus": "*",
-    "oauth2orize": "*",
-    "connect-ensure-login": "*",
-    "passport": "*",
-    "passport-local": "0.1.x",
-    "passport-http": "0.2.x",
-    "passport-oauth2-client-password": "0.1.x",
-    "passport-http-bearer": "*",
-    "url": "*",
-    "mongoose": "*",
-    "moment": "*",
-    "bcrypt": "*",
-    "fluent-ffmpeg": "*"
+    "bcrypt": "6.0.0",
+    "connect-ensure-login": "0.1.1",
+    "connect-mongo": "6.0.0",
+    "cors": "2.8.6",
+    "express": "5.3.0",
+    "express-session": "1.19.0",
+    "moment": "2.31.0",
+    "mongodb": "7.9.1",
+    "mongoose": "9.12.3",
+    "multer": "2.5.0",
+    "nib": "1.2.0",
+    "oauth2orize": "1.12.0",
+    "passport": "0.7.0",
+    "passport-http": "0.3.0",
+    "passport-http-bearer": "1.0.1",
+    "passport-local": "1.0.0",
+    "passport-oauth2-client-password": "0.1.2",
+    "pug": "3.0.4",
+    "socket.io": "4.8.4",
+    "stylus": "0.64.0"
+  },
+  "devDependencies": {
+    "socket.io-client": "4.8.4"
+  },
+  "overrides": {
+    "stylus": {
+      "glob": "14.0.6",
+      "minimatch": "11.0.9"
+    },
+    "glob": {
+      "minimatch": "11.0.9"
+    }
   }
 }

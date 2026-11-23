@@ -1,74 +1,20 @@
-var passport = require("passport")
-var socketio = require("socket.io")
-var Account = require("../models/account")
-var Note = require("../models/note")
-var Inquiry = require("../models/inquiry")
-
-exports.create = [
-  passport.authenticate("bearer", { session: false }),
-  function(req, res) {
-    Account.findById(req.user.id, function(err, account) {
-      var noteTemplate = req.body
-      noteTemplate.account = account
-
-      if (noteTemplate.note.length <= 0) {
-        res.json({})
-        return
-      }
-
-      Note.create(
-        {
-          account: noteTemplate.account,
-          page: noteTemplate.page,
-          note: noteTemplate.note,
-        },
-        function(err, note) {
-          if (err) throw err
-
-          note.populate({ path: "page", model: "Page" }, function(
-            err,
-            notePopulated
-          ) {
-            io.sockets.emit("note", note)
-            res.json(note)
-          })
-        }
-      )
-    })
-  },
-]
-
-exports.read = [
-  function(req, res, next) {
-    var pageId = null
-    if (req.query["pageId"]) {
-      pageId = req.query["pageId"]
-    }
-    console.log("Getting Notes for Page " + pageId)
-
-    var result = []
-
-    if (pageId !== null) {
-      Note.findOne({ page: pageId })
-        .sort("-date")
-        .exec(function(err, note) {
-          if (err) throw err
-
-          if (note === null) {
-            res.json([])
-            return
-          }
-
-          note.populate({ path: "page", model: "Page" }, function(
-            err,
-            notePopulated
-          ) {
-            io.sockets.emit("note", notePopulated)
-            res.json(notePopulated)
-          })
-        })
-    } else {
-      res.json(result)
-    }
-  },
-]
+const Model = require('../models/note');
+const inquiry = require('../lib/inquiry');
+exports.read = async (req,res) => {
+  const id = req.query.pageId;
+  if(!id) return res.json([]);
+  const query = Model.findOne({page:id}).sort('-date');
+  query.populate("page");
+  res.json(await query || []);
+};
+exports.create = async (req,res) => {
+  const data = req.body;
+  if(!data.note || !data.page) throw inquiry.httpError(400,'note and page are required');
+  await inquiry.requireDocument(require('../models/page'),data.page);
+  const fields = {account:req.user._id,page:data.page};
+  fields.note=data.note;
+  const entry = await Model.create(fields);
+  await entry.populate("page");
+  req.app.get('io').emit('note',entry);
+  res.json(entry);
+};

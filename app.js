@@ -1,364 +1,122 @@
-var express = require("express")
-var routes = require("./routes")
-var controllers = require("./controllers")
-var http = require("http")
-var path = require("path")
-var passport = require("passport")
-var oauth2 = require("./oauth2")
-var util = require("util")
-var jade = require("jade")
-var url = require("url")
-var mongoose = require("mongoose")
-var socketio = require("socket.io")
-var stylus = require("stylus")
-var nib = require("nib")
-var moment = require("moment")
-var ffmpeg = require("fluent-ffmpeg")
-
-var AccessToken = require("./models/accesstoken")
-var Account = require("./models/account")
-var Client = require("./models/client")
-var Photo = require("./models/photo")
-var Timeline = require("./models/timeline")
-
-var argPort = 3000
-var database = "sciencekit"
-
-//-----------------------------------------------------------------------------
-// Connect to Mongoose.
-//-----------------------------------------------------------------------------
-
-var mongooseUri =
-  process.env.MONGOLAB_URI ||
-  process.env.MONGOHQ_URL ||
-  "mongodb://localhost/" + database
-
-var mongooseOptions = {}
-mongoose.connect(mongooseUri, mongooseOptions)
-
-var db = mongoose.connection
-db.on("error", function callback() {
-  console.log("Mongoose connection error.")
-})
-db.once("open", function callback() {
-  console.log("Mongoose connection opened successfully.") // Yay
-})
-
-// Emitted when this connection successfully connects to the db. May be emitted multiple times in reconnected scenarios.
-db.on("connected", function callback() {
-  console.log("Mongoose: connected")
-})
-// Emitted after getting disconnected from the db.
-db.on("disconnected", function callback() {
-  console.log("Mongoose: disconnected")
-})
-
-//-----------------------------------------------------------------------------
-// Initialize database.
-//-----------------------------------------------------------------------------
-
-// Create timeline.
-Timeline.find({ hidden: false })
-  .sort("-date")
-  .exec(function(err, timelines) {
-    if (timelines.length <= 0) {
-      Timeline.create({}, function(err, timeline) {
-        if (err) {
-          console.log("Error creating new Timeline.")
-        }
-        console.log("Created new Timeline.")
-      })
-    }
-  })
-
-// Stylus compile function.
-function compile(str, path) {
-  return stylus(str)
-    .set("filename", path)
-    .use(nib())
+const express = require('express');
+const http = require('node:http');
+const path = require('node:path');
+const fs = require('node:fs');
+const crypto = require('node:crypto');
+const mongoose = require('mongoose');
+const session = require('express-session');
+const {MongoStore} = require('connect-mongo');
+const {Server} = require('socket.io');
+const multer = require('multer');
+const cors = require('cors');
+const stylus = require('stylus');
+const nib = require('nib');
+const passport = require('./auth');
+const controllers = require('./controllers');
+const oauth2 = require('./oauth2');
+const Client = require('./models/client');
+const Account = require('./models/account');
+const AccessToken = require('./models/accesstoken');
+const inquiry = require('./lib/inquiry');
+const mongoUrl=process.env.MONGODB_URI || process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/sciencekit';
+const app = express();
+app.disable('x-powered-by');
+app.use(cors());
+app.use(express.json({limit:'15mb'}));
+app.use(express.urlencoded({extended:true,limit:'15mb'}));
+app.set('views',path.join(__dirname,'views'));
+app.set('view engine','pug');
+const sessionStore=MongoStore.create({mongoUrl});
+app.use(session({secret:process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),resave:false,saveUninitialized:false,store:sessionStore,cookie:{httpOnly:true,sameSite:'lax'}}));
+app.use(passport.initialize());
+app.use(passport.session());
+const uploadDir=path.join(__dirname,'public/uploads');
+fs.mkdirSync(uploadDir,{recursive:true});
+const mediaTypes={'image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp','image/gif':'.gif','video/mp4':'.mp4','video/quicktime':'.mov','video/webm':'.webm'};
+const upload=multer({fileFilter:(req,file,done)=> {
+  const expected=req.path.endsWith('/photo') ? 'image/' : 'video/';
+  if(!mediaTypes[file.mimetype] || !file.mimetype.startsWith(expected)) return done(Object.assign(new Error('Unsupported media type'),{status:415}));
+  done(null,true);
+},storage:multer.diskStorage({destination:uploadDir,filename:(req,file,done)=>done(null,crypto.randomUUID()+mediaTypes[file.mimetype])}),limits:{fileSize:100*1024*1024,files:1}});
+app.use(stylus.middleware({src:path.join(__dirname,'public'),compile:(str,filename)=>stylus(str).set('filename',filename).use(nib())}));
+app.use(express.static(path.join(__dirname,'public')));
+const clientDir=process.env.CLIENT_DIR || path.resolve(__dirname,'../sciencekit-ios/www');
+app.use('/app',express.static(clientDir));
+app.get('/',(req,res)=>res.redirect(process.env.CLIENT_URL || '/app/'));
+app.get('/health',(req,res)=>res.status(mongoose.connection.readyState===1 ? 200 : 503).json({status:mongoose.connection.readyState===1 ? 'ok' : 'unavailable'}));
+app.get('/api/status',(req,res)=>res.json({server:'sciencekit',version:'1.0.0'}));
+app.get('/signup',(req,res)=>res.render('signup'));
+app.post('/signup',controllers.account.create);
+app.get('/login',(req,res)=>res.render('login'));
+app.post('/login',passport.authenticate('local',{successReturnToOrRedirect:'/app/',failureRedirect:'/login'}));
+app.get('/logout',(req,res,next)=>req.logout(error=>error ? next(error) : res.redirect('/')));
+app.get('/account',require('connect-ensure-login').ensureLoggedIn(),(req,res)=>res.render('account',{user:req.user}));
+app.get('/timeline',(req,res)=>res.redirect('/app/timeline.html'));
+app.get('/dialog/authorize',oauth2.authorization);
+app.post('/dialog/authorize/decision',oauth2.decision);
+app.get('/oauth/exchange',oauth2.exchangeGrantForToken);
+app.post('/oauth/token',oauth2.token);
+app.post('/api/session',passport.authenticate('local',{session:false}),async (req,res)=> {
+  const token=crypto.randomBytes(32).toString('hex');
+  await AccessToken.create({token,userID:req.user.id});
+  res.json({access_token:token,token_type:'Bearer',account:req.user});
+});
+app.delete('/api/session',passport.authenticate('bearer',{session:false}),async (req,res)=> {
+  await AccessToken.deleteOne({token:req.get('authorization').slice(7)});res.sendStatus(204);
+});
+const authenticated=passport.authenticate('bearer',{session:false});
+app.use('/api',authenticated);
+app.get('/api/account',controllers.account.read);
+app.get('/api/timeline',controllers.timeline.read);
+app.get('/api/entry/:id',controllers.timeline.readEntry);
+app.get('/api/story',controllers.Story.read);
+for(const name of ['Story','Page','Text','Question','Observation','Sequence','Collaboration','Identity','Sketch','Reflection']) app.post('/api/'+name.toLowerCase(),controllers[name].create);
+app.post('/api/photo',upload.single('myphoto'),controllers.Photo.create);
+app.post('/api/video',upload.single('file'),controllers.Video.create);
+app.get('/api/photo/:id',async (req,res)=>res.json(await inquiry.requireDocument(require('./models/photo'),req.params.id)));
+for(const name of ['Tag','Bump']) {
+  app.get('/api/'+name.toLowerCase(),controllers[name].read);
+  app.post('/api/:activityType/'+name.toLowerCase(),controllers[name].create);
 }
-
-var app = express()
-
-app.configure(function() {
-  var port = process.env.PORT || argPort
-
-  app.set("port", port)
-
-  app.set("views", __dirname + "/views")
-  app.set("view engine", "jade")
-  app.use(express.favicon())
-  app.use(express.logger("dev"))
-  app.use(
-    express.bodyParser({
-      uploadDir: __dirname + "/public/uploads",
-      keepExtensions: true,
-    })
-  )
-
-  app.use(express.methodOverride())
-  app.use(express.cookieParser("your secret here"))
-  app.use(express.session()) // Note: Make sure this is before passport.initialize().
-
-  app.use(passport.initialize())
-  app.use(passport.session())
-
-  app.use(app.router)
-
-  app.use(
-    stylus.middleware({
-      src: __dirname + "/public",
-      compile: compile,
-    })
-  )
-
-  app.use(express.static(path.join(__dirname, "public")))
-})
-
-app.configure("development", function() {
-  app.use(express.errorHandler())
-})
-
-// Passport configuration
-require("./auth")
-
-// Routes
-app.get("/", routes.index)
-
-app.get("/signup", routes.signupForm)
-app.post("/signup", controllers.account.create)
-app.get("/login", routes.loginForm)
-app.post("/login", routes.login)
-app.get("/logout", routes.logout)
-app.get("/account", routes.account)
-
-app.get("/timeline", routes.timeline)
-
-// OAuth2 Provider URIs (this is an OAuth2 term)
-//
-// Once a client has been created by and associated with a user and stored in
-// the database.  This must happen first because the authorization request
-// must include a "client ID" and a "client secret".
-//
-// +--------------+                               +---------------+
-// |              |--(A)- Authorization Request ->|   Resource    |
-// |              |                               |     Owner     |
-// |              |<-(B)-- Authorization Grant ---|    (Human)    |
-// |              |                               +---------------+
-// |              |
-// |              |        Authorization Grant &  +---------------+
-// |              |--(C)--- Client Credentials -->| Authorization |
-// |    Client    |                               |     Server    |
-// | (ScienceKit) |<-(D)----- Access Token -------|               |
-// |              |                               +---------------+
-// |              |
-// |              |                               +---------------+
-// |              |--(E)----- Access Token ------>|    Resource   |
-// |              |                               |     Server    |
-// |              |<-(F)--- Protected Resource ---|               |
-// +--------------+                               +---------------+
-//
-//      Figure: Abstract Protocol Flow, specific to ScienceKit.
-//
-// [http://tools.ietf.org/html/draft-ietf-oauth-v2-bearer-20#section-2.1]
-//
-// Notes:
-// - The OAuth specification suggests that the Authorization Server and
-//   Resource server should be hosted on different machines.  This server
-//   implements both to be hosted on a single machine.  This potentially
-//   reduces security, but it is a simple approach.
-//
-// - The redirect_uri parameter for the following calls must be identical:
-//
-//       /dialog/authorize
-//       /oauth/token
-//
-//   The calls will fail if the redirect_uri parameter in /oauth/token does
-//   not match the one used previously the the /dialog/authorize request.
-
-// Resource owner (this is an OAuth2 term).
-app.get("/dialog/authorize", oauth2.authorization) // (A)
-app.post("/dialog/authorize/decision", oauth2.decision)
-
-// Authorization server.
-app.get("/oauth/exchange", oauth2.exchangeGrantForToken) // (1) extract authorization_code (grant) and (2) make request to exchange grant for access token to /oauth/token; (3) store resulting access_token and token_type in DB
-app.post("/oauth/token", oauth2.token) // (C)
-
-app.post("/api/client/create", function(req, res, next) {
-  // Create client.
-  var client = new Client({
-    name: "ScienceKit Node",
-    clientId: "abc123",
-    clientSecret: "ssh-secret",
-  })
-
-  // Save client to datastore.
-  client.save(function(err, client) {
-    if (err) {
-      console.log("Error creating client: " + client)
-    }
-    console.log("Created client: " + client)
-    res.json(client)
-  })
-})
-
-app.all("/api/*", function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*")
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-  res.header(
-    "Access-Control-Allow-Headers",
-    "X-Requested-With, Authorization, Content-Type"
-  )
-  res.header("Access-Control-Max-Age", "3628800")
-
-  if (req.method === "OPTIONS") {
-    res.send(200)
-  } else {
-    next()
-  }
-})
-
-app.get("/api/status", function(req, res, next) {
-  res.json({
-    server: "sciencekit",
-    version: "0.2",
-  })
-})
-
-//-----------------------------------------------------------------------------
-// Resource Server (this is an OAuth2 term). The resource server stores the
-// protected resources (API URIs that require authentication).
-//-----------------------------------------------------------------------------
-
-app.get("/api/account", controllers.account.read)
-app.get("/api/timeline", controllers.timeline.read)
-app.get("/api/entry/:id", controllers.timeline.readEntry)
-app.get("/api/story", controllers.Story.read)
-app.post("/api/story", controllers.Story.create)
-app.post("/api/reflection", controllers.Reflection.create)
-app.post("/api/page", controllers.Page.create)
-app.post("/api/text", controllers.Text.create)
-app.post("/api/question", controllers.Question.create)
-app.post("/api/observation", controllers.Observation.create)
-app.post("/api/sequence", controllers.Sequence.create)
-app.post("/api/collaboration", controllers.Collaboration.create)
-app.post("/api/identity", controllers.Identity.create)
-app.post("/api/:activityType/tag", controllers.Tag.create)
-app.get("/api/tag", controllers.Tag.read)
-app.post("/api/note", controllers.Note.create)
-app.get("/api/note", controllers.Note.read)
-app.post("/api/:activityType/bump", controllers.Bump.create)
-app.get("/api/bump", controllers.Bump.read)
-app.post("/api/photo", controllers.Photo.create)
-app.get("/api/photo/:id", controllers.Photo.read)
-app.post("/api/video", controllers.Video.create)
-app.post("/api/sketch", controllers.Sketch.create)
-
-var server = http.createServer(app).listen(app.get("port"), function() {
-  console.log("ScienceKit server listening on port " + app.get("port"))
-})
-
-//-----------------------------------------------------------------------------
-// Sockets server configuration.
-//-----------------------------------------------------------------------------
-
-io = socketio.listen(server)
-
-var connections = []
-
-// Note: Do not preceed 'io' with 'var'.  This allows 'io' to be globally
-// accessible, accessible in other modules.
-
-io.on("connection", function(socket) {
-  // Start custom authentication handshaking (request OAuth access token from client)
-  socket.emit("oauthrequesttoken")
-
-  // Handler for received "oauth" messages.
-  // Authenticates the socket connection.
-  socket.on("oauthtoken", function(msg) {
-    console.log("'oauthtoken' event received: ", msg)
-
-    var accessToken = msg || ""
-
-    // Check if access token is valid.
-    AccessToken.findOne({ token: accessToken }, function(err, token) {
-      if (err) {
-        socket.disconnect()
-        return
-      }
-      if (!token) {
-        socket.disconnect()
-        return
-      }
-      console.log("Found access token: " + token)
-
-      Account.findById(token.userID, function(err, account) {
-        if (err) {
-          socket.disconnect()
-          return
-        }
-        if (!account) {
-          socket.disconnect()
-          return
-        }
-        console.log("Found account for received token: " + account)
-
-        socket.emit("oauthtokensuccess")
-      })
-    })
-  })
-
-  // Handler for received "message" messages
-  socket.on("message", function(msg) {
-    console.log("'message' event received: ", msg)
-
-    // Get access token (if any)... required.
-    var message = JSON.parse(msg)
-    var accessToken = message.token
-
-    // Check if access token is valid.
-    AccessToken.findOne({ token: accessToken }, function(err, token) {
-      if (err) {
-        socket.disconnect()
-        return
-      }
-      if (!token) {
-        socket.disconnect()
-        return
-      }
-
-      Account.findById(token.userID, function(err, account) {
-        if (err) {
-          socket.disconnect()
-          return
-        }
-        if (!account) {
-          socket.disconnect()
-          return
-        }
-
-        // Strip OAuth2 access token
-        message = { account: account, message: message }
-
-        socket.broadcast.emit("message", message)
-      })
-    })
-  })
-
-  socket.on("disconnect", function() {
-    console.log("Socket disconnected.")
-  })
-})
-
-io.configure(function() {
-  io.set("authorization", function(handshakeData, callback) {
-    var error = null
-    var authorized = true
-    callback(error, authorized)
-  })
-})
-
-console.log(
-  "ScienceKit server listening for socket/streaming connections on port " +
-    app.get("port")
-)
+app.get('/api/note',controllers.Note.read);
+app.post('/api/note',controllers.Note.create);
+app.use((req,res)=>res.status(404).json({error:'Not found'}));
+app.use((error,req,res,next)=> {
+  const status=error.status || (['ValidationError','CastError'].includes(error.name) ? 400 : error instanceof multer.MulterError ? 400 : 500);
+  if(status===500) console.error(error);
+  res.status(status).json({error:status===500 ? 'Internal server error' : error.message});
+});
+const server=http.createServer(app);
+const io=new Server(server,{cors:{origin:'*'}});
+app.set('io',io);
+io.on('connection',socket=> {
+  const timer=setTimeout(()=>{if(!socket.data.account) socket.disconnect(true);},10000);
+  socket.emit('oauthrequesttoken');
+  socket.on('oauthtoken',async token=> {
+    try {
+      const access=await AccessToken.findOne({token});
+      const account=access && await Account.findById(access.userID);
+      if(!account) return socket.disconnect(true);
+      socket.data.account=account;clearTimeout(timer);socket.join('authenticated');socket.emit('oauthtokensuccess');
+    } catch { socket.disconnect(true); }
+  });
+  socket.on('message',message=> {
+    if(!socket.data.account) return;
+    try {const value=typeof message==='string' ? JSON.parse(message) : message;delete value.token;socket.to('authenticated').emit('message',{account:socket.data.account,message:value});} catch {socket.emit('error','Invalid message');}
+  });
+  socket.on('disconnect',()=>clearTimeout(timer));
+});
+// Controllers publish only to authenticated connections.
+app.set('io',io.to('authenticated'));
+async function start() {
+  await mongoose.connect(mongoUrl,{serverSelectionTimeoutMS:10000});
+  await Account.init();
+  await inquiry.timeline();
+  await Client.updateOne({clientId:'abc123'},{$setOnInsert:{name:'ScienceKit Local',clientSecret:'ssh-secret'}},{upsert:true});
+  const port=Number(process.env.PORT || 3000);
+  await new Promise(resolve=>server.listen(port,process.env.HOST || '127.0.0.1',resolve));
+  console.log('ScienceKit listening at http://localhost:'+port+'/app/');
+}
+async function stop() { await new Promise(resolve=>io.close(resolve));await sessionStore.close();await mongoose.disconnect(); }
+if(require.main===module) {start().catch(error=>{console.error(error);process.exit(1);});for(const signal of ['SIGINT','SIGTERM']) process.on(signal,()=>stop().then(()=>process.exit()));}
+module.exports={app,server,io,start,stop};

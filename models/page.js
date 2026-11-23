@@ -10,34 +10,4 @@ var pageSchema = new mongoose.Schema({
   hidden: Boolean,
 })
 
-pageSchema.statics.getPopulated = function(page, fn) {
-  this.findById(page.id, function(err, page) {
-    page.populate({ path: "entry", model: "Moment" }, function(
-      err,
-      populatedMoment
-    ) {
-      populatedMoment.populate({ path: "author" }, function(
-        err,
-        populatedAuthor
-      ) {
-        fn(err, page)
-      })
-    })
-  })
-}
-
-pageSchema.statics.getPopulated2 = function(page, fn) {
-  page.populate({ path: "entry", model: "Moment" }, function(
-    err,
-    populatedMoment
-  ) {
-    populatedMoment.populate({ path: "author" }, function(
-      err,
-      populatedAuthor
-    ) {
-      fn(err, populatedMoment)
-    })
-  })
-}
-
 module.exports = mongoose.model("Page", pageSchema)

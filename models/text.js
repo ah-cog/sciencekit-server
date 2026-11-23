@@ -2,6 +2,7 @@ var mongoose = require("mongoose")
 var Account = require("./account")
 
 var textSchema = new mongoose.Schema({
+  text: { type: String, default: "" },
   moment: { type: mongoose.Schema.Types.ObjectId, ref: "Moment" },
   date: { type: Date, default: Date.now },
   hidden: Boolean,

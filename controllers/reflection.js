@@ -1,25 +1,8 @@
-var passport = require("passport")
-var socketio = require("socket.io")
-var Account = require("../models/account")
-var Reflection = require("../models/reflection")
-var Moment = require("../models/moment")
-var Inquiry = require("../models/inquiry")
-
-exports.create = [
-  passport.authenticate("bearer", { session: false }),
-  function(req, res, next) {
-    var data = req.body
-
-    Account.findById(req.user.id, function(err, account) {
-      var reflectionTemplate = {
-        account: account,
-        text: data["text"],
-      }
-
-      Inquiry.addReflection(reflectionTemplate, function(err, entry) {
-        io.sockets.emit("reflection", entry)
-        res.json(entry)
-      })
-    })
-  },
-]
+const inquiry = require('../lib/inquiry');
+exports.create = async (req,res) => {
+  const data = {...req.body};
+  if(req.file) data.uri = '/uploads/' + req.file.filename;
+  const entry = await inquiry.create('Reflection',data,req.user);
+  req.app.get('io').emit('reflection',entry);
+  res.json(entry);
+};

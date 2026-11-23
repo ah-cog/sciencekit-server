@@ -1,99 +1,31 @@
-ScienceKit
-==========
+# ScienceKit server
 
-ScienceKit is a research project from the University of Maryland, College Park.  This is the initial, private ScienceKit code repository.  This document describes how to get, set up, and deploy ScienceKit and how to develop for ScienceKit.
+The ScienceKit API and real-time collaboration server runs on Node.js 26 LTS (24+ remains supported), Express 5, Mongoose 9 and Socket.IO 4. Existing MongoDB collection names and the client's moment, concept, story and page response shapes are retained. Jade templates have moved to Pug, and database operations use promises.
 
-## Getting and Setting Up ScienceKit
+The full application is containerized in [sciencekit](https://github.com/ah-cog/sciencekit). Start it with `npm run configure && npm start` from that checkout. Compose supplies MongoDB, the API, the browser client, health checks, and persistent media/database volumes. The API is exposed on http://localhost:3000 and the client on http://localhost:8080. Native apps use this same API.
 
-Check out from GitHub:
+For host development, start MongoDB and install dependencies:
 
-	git clone git@github.com:mokogobo/sciencekit.git
+```sh
+npm ci
+cp .env.example .env
+npm start
+```
 
-Open the directory:
+`MONGODB_URI` selects the database; `PORT` defaults to 3000, `HOST` to 127.0.0.1. `SESSION_SECRET` makes browser sessions survive restarts. `CLIENT_DIR` points to the mobile repository's `www` directory if it is not an adjacent checkout. `CLIENT_URL` optionally redirects the API root to an independently served browser client. Video uploads require `ffmpeg` (included in the container); `FFMPEG_PATH` overrides its executable path.
 
-	cd sciencekit
+Create an account at `/signup`, or seed a local account explicitly:
 
-Install dependencies:
+```sh
+SEED_USERNAME=researcher SEED_PASSWORD='choose-a-local-password' npm run seed
+```
 
-	npm install
+`POST /api/session` accepts JSON `{ "username": "…", "password": "…" }` and returns an `access_token`. Send `Authorization: Bearer <token>` on API calls. `DELETE /api/session` revokes the token. Password hashes never appear in API responses. The historical authorization-code endpoints remain available for the registered local client; codes are single use.
 
-Fire up the ScienceKit server:
+Key endpoints: `/api/timeline`, `/api/entry/:id`, `/api/story`, `/api/page`, `/api/text`, `/api/question`, `/api/observation`, `/api/sequence`, `/api/collaboration`, `/api/identity`, `/api/reflection`, `/api/sketch`, `/api/photo`, and `/api/video`. Photos use multipart field `myphoto`; videos use `file`. Socket.IO clients answer `oauthrequesttoken` with `oauthtoken`; updates are published only to authenticated sockets.
 
-	node app
+```sh
+npm test
+```
 
-Open <http://localhost:3000/> in a browser.
-
-## Deploying ScienceKit
-
-### Deploy on Heroku
-
-Create local clone of ScienceKit GitHub repository:
-
-	git clone https://github.com/mokogobo/pre-sciencekit.git
-
-Create a ScienceKit Heroku app:
-
-	heroku create
-
-Deploy ScienceKit to Heroku:
-
-	git push heroku master
-
-Open the deployed ScienceKit app on Heroku in a web browser:
-
-	heroku open
-
-Make ScienceKit available at a subdomain:
-
-	heroku apps:rename sciencekit
-
-Use a custom domain by following the instructions at https://devcenter.heroku.com/articles/custom-domains.
-
-#### Additional Heroku Instructions
-
-View Logs
-
-	heroku logs
-
-View running processes
-
-	heroku ps
-
-View environment variables
-
-	heroku config
-
-Add an environment variable
-
-	heroku config:add NODE_ENV=production
-
-More about enviornment variables at https://devcenter.heroku.com/articles/config-vars.
-
-#### Description of Heroku-specific Files
-
-The file <code>Procfile</code> is a file that describes how to run the ScienceKit app on Heroku.
-
-### Deploy on Local Server (localhost)
-
-1. Set up Node.js
-2. Check out repository on GitHub
-3. Install NPMs (npm install)
-4. Start server
-5. Open ScienceKit in web browser on local machine.
-6. Set up server for access over network from iPads.  Test on iPad or other iOS device.
-
-#### Configure localhost for Authentication Callbacks
-
-Here's a slick trick to make development a bit easier.  Add to <code>/etc/hosts</code>:
-
-	127.0.0.1	callback.sciencekit.io
-
-## Setting Up a Development Environment
-
-I recommend using nodemon for development because it will automatically restart the ScienceKit Node.js application if any of its files are changed.
-
-## ScienceKit RESTful HTTP API Documentation
-
-The ScienceKit HTTP API can be used to interact with the ScienceKit server.  You can create your own ScienceKit apps using this HTTP API.
-
-The apiary.io documentation describing the [ScienceKit RESTful HTTP API](http://docs.sciencekit.apiary.io/ "ScienceKit HTTP API apiary.io Documentation").
+The integration suite requires MongoDB on 127.0.0.1:27017. It creates a unique temporary database, validates authentication failures, empty timelines, entries and concepts, story ordering, media uploads, token revocation, and authenticated real-time delivery, then drops only that test database. Set `TEST_MONGODB_URI` to use a separate test server; its database is deleted after the run.

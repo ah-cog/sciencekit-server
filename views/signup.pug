@@ -1,0 +1,15 @@
+extends layout
+block content
+  img(src="/images/sciencekit-logo.png",alt="ScienceKit")
+  h1 Create an account
+  form(action="/signup",method="post")
+    label(for="username") Username
+    input#username(name="username",autocomplete="username",required)
+    label(for="password") Password
+    input#password(name="password",type="password",autocomplete="new-password",minlength="8",required)
+    p Use at least 8 characters, up to 72 UTF-8 bytes.
+    button(type="submit") Create account
+  p
+    a(href="/login") Already have an account? Sign in
+  p
+    a(href="http://localhost:8080") Return to ScienceKit
